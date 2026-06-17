@@ -1,0 +1,132 @@
+# =============================================================================
+# SECRETS & ENVIRONMENT FILES — NEVER COMMIT THESE
+# =============================================================================
+.env
+.env.*
+!.env.example
+!.env.*.example
+
+# =============================================================================
+# PYTHON / DJANGO
+# =============================================================================
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+*.so
+*.egg
+*.egg-info/
+dist/
+build/
+eggs/
+parts/
+var/
+sdist/
+develop-eggs/
+.installed.cfg
+lib/
+lib64/
+.Python
+
+# Django
+backend/staticfiles/
+backend/static/
+backend/media/
+*.log
+local_settings.py
+db.sqlite3
+db.sqlite3-journal
+
+# Celery
+celerybeat-schedule
+celerybeat.pid
+
+# Virtual environments
+.venv/
+venv/
+ENV/
+env/
+.env.bak
+
+# =============================================================================
+# NODE / NEXT.JS
+# =============================================================================
+node_modules/
+.next/
+out/
+dist/
+.cache/
+.parcel-cache/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.npm
+.yarn-integrity
+
+# Next.js build output
+frontend/.next/
+frontend/out/
+frontend/dist/
+
+# Next.js env files (all variants)
+frontend/.env
+frontend/.env.*
+!frontend/.env.example
+
+# =============================================================================
+# DOCKER
+# =============================================================================
+# Do NOT ignore docker-compose.yml (needed for deployment reference)
+# Ignore override files with local secrets
+docker-compose.override.yml
+docker-compose.local.yml
+
+# =============================================================================
+# DATABASES (local dumps, not the container volumes)
+# =============================================================================
+*.sql
+*.dump
+*.sqlite3
+postgres_data/
+redis_data/
+
+# =============================================================================
+# CLOUDINARY / UPLOADS
+# =============================================================================
+backend/media/
+uploads/
+
+# =============================================================================
+# IDE & OS FILES
+# =============================================================================
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+
+# =============================================================================
+# CERTIFICATES & KEYS
+# =============================================================================
+*.pem
+*.key
+*.crt
+*.p12
+*.pfx
+
+# =============================================================================
+# PYTEST / COVERAGE
+# =============================================================================
+.pytest_cache/
+.coverage
+htmlcov/
+.tox/
+coverage.xml
+*.cover
