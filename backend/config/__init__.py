@@ -1,5 +1,3 @@
-from celery import Celery
+from celery_app import app as celery_app
 
-def make_celery():
-    from backend.celery import app
-    return app
+__all__ = ('celery_app',)

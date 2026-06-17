@@ -1,0 +1,10 @@
+from django.apps import AppConfig
+
+
+class InstrumentsConfig(AppConfig):
+    default_auto_field = 'django.db.models.BigAutoField'
+    name = 'apps.instruments'
+    verbose_name = 'Instruments'
+
+    def ready(self):
+        import apps.instruments.signals
