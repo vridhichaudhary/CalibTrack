@@ -39,15 +39,13 @@ class InstrumentListCreateView(generics.ListCreateAPIView):
         'serial_number',
         'status',
         'created_at',
+        'next_due_date',
     ]
-    ordering = ['name']
+    ordering = ['next_due_date']
 
     def get_queryset(self):
-        """
-        Only return non-deleted instruments.
-        Prefetch latest calibration record to avoid N+1 queries
-        when serializing the list with latest_calibration inline.
-        """
+        from django.db.models import Min
+
         return Instrument.objects.filter(
             is_deleted=False
         ).select_related(
@@ -59,6 +57,8 @@ class InstrumentListCreateView(generics.ListCreateAPIView):
                     '-calibration_due_date'
                 )
             )
+        ).annotate(
+            next_due_date=Min('calibration_records__calibration_due_date')
         )
 
     def get_serializer_class(self):

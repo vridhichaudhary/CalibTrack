@@ -15,8 +15,19 @@ from .serializers import (
 )
 from .permissions import IsAdminRole
 
+from rest_framework.throttling import AnonRateThrottle
+
 logger = logging.getLogger(__name__)
 User = get_user_model()
+
+class LoginRateThrottle(AnonRateThrottle):
+    """
+    Stricter rate limit specifically for login attempts —
+    5 per minute per IP address — to slow down brute-force
+    password guessing attempts without affecting normal usage
+    of other read endpoints.
+    """
+    scope = 'login'
 
 
 class LoginView(TokenObtainPairView):
@@ -28,6 +39,7 @@ class LoginView(TokenObtainPairView):
     """
     permission_classes = [AllowAny]
     serializer_class = CustomTokenObtainPairSerializer
+    throttle_classes = [LoginRateThrottle]
 
     def post(self, request, *args, **kwargs):
         serializer = self.get_serializer(data=request.data)

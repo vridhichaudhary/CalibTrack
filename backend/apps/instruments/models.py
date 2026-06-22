@@ -6,10 +6,19 @@ from django.utils import timezone
 
 
 def validate_pdf_file(file):
+    allowed_content_types = ['application/pdf']
+    
     if not file.name.lower().endswith('.pdf'):
         raise ValidationError('Only PDF files are allowed.')
+    
+    if hasattr(file, 'content_type') and file.content_type not in allowed_content_types:
+        raise ValidationError('Invalid file type. Only PDF files are allowed.')
+    
     if file.size > 10 * 1024 * 1024:
         raise ValidationError('File size cannot exceed 10 MB.')
+    
+    if file.size == 0:
+        raise ValidationError('Uploaded file is empty.')
 
 
 def calibration_report_upload_path(instance, filename):

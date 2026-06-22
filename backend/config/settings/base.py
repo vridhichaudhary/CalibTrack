@@ -119,6 +119,15 @@ REST_FRAMEWORK = {
         'rest_framework.renderers.JSONRenderer',
     ],
     'EXCEPTION_HANDLER': 'core.exceptions.custom_exception_handler',
+    'DEFAULT_THROTTLE_CLASSES': [
+        'rest_framework.throttling.AnonRateThrottle',
+        'rest_framework.throttling.UserRateThrottle',
+    ],
+    'DEFAULT_THROTTLE_RATES': {
+        'anon': '20/minute',
+        'user': '120/minute',
+        'login': '5/minute',
+    },
 }
 
 from datetime import timedelta
@@ -188,3 +197,22 @@ LOGGING = {
         },
     },
 }
+
+# File upload limits — prevents memory exhaustion from
+# maliciously large multipart uploads, separate from the
+# 10MB PDF validator which only checks AFTER the file is
+# already read into memory. This rejects oversized requests
+# at the WSGI level before they reach application code.
+DATA_UPLOAD_MAX_MEMORY_SIZE = 15 * 1024 * 1024  # 15 MB
+FILE_UPLOAD_MAX_MEMORY_SIZE = 15 * 1024 * 1024  # 15 MB
+
+# Session and cookie hardening
+SESSION_COOKIE_HTTPONLY = True
+CSRF_COOKIE_HTTPONLY = False  # must be False so JS can read it if needed
+SESSION_COOKIE_SAMESITE = 'Lax'
+CSRF_COOKIE_SAMESITE = 'Lax'
+
+# Prevents the browser from MIME-sniffing a response away
+# from the declared content-type — already set in production.py
+# but harmless to also have as a base default
+SECURE_CONTENT_TYPE_NOSNIFF = True

@@ -17,4 +17,5 @@ COPY . .
 
 RUN chmod +x entrypoint.sh
 
+ENV DJANGO_SETTINGS_MODULE=config.settings.production
 EXPOSE 8000
