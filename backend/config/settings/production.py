@@ -6,17 +6,21 @@ DEBUG = False
 
 ALLOWED_HOSTS = config(
     'ALLOWED_HOSTS',
-    cast=lambda v: [s.strip() for s in v.split(',')]
+    default='',
+    cast=lambda v: [s.strip() for s in v.split(',') if s.strip()]
 )
+ALLOWED_HOSTS.append('healthcheck.railway.app')
 
 CORS_ALLOWED_ORIGINS = config(
     'CORS_ALLOWED_ORIGINS',
-    cast=lambda v: [s.strip() for s in v.split(',')]
+    default='',
+    cast=lambda v: [s.strip() for s in v.split(',') if s.strip()]
 )
 
 CSRF_TRUSTED_ORIGINS = config(
     'CORS_ALLOWED_ORIGINS',
-    cast=lambda v: [s.strip() for s in v.split(',')]
+    default='',
+    cast=lambda v: [s.strip() for s in v.split(',') if s.strip()]
 )
 
 SECURE_BROWSER_XSS_FILTER = True
