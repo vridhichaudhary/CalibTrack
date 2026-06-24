@@ -23,8 +23,8 @@ export function Sidebar() {
   const links = user?.role === 'admin' ? ADMIN_LINKS : USER_LINKS;
 
   return (
-    <div className="w-64 bg-gray-900 min-h-screen flex flex-col">
-      <div className="px-6 py-5 border-b border-gray-800">
+    <div className="w-64 bg-primary min-h-screen flex flex-col">
+      <div className="px-6 py-5 border-b border-primary-hover">
         <h1 className="text-white font-semibold text-lg">CalibTrack</h1>
         <p className="text-gray-400 text-xs mt-0.5">
           {user?.role === 'admin' ? 'Admin Panel' : 'User Dashboard'}
@@ -42,8 +42,8 @@ export function Sidebar() {
               className={classNames(
                 'flex items-center gap-3 px-3 py-2.5 rounded-md text-sm font-medium transition-colors',
                 isActive
-                  ? 'bg-blue-600 text-white'
-                  : 'text-gray-300 hover:bg-gray-800 hover:text-white'
+                  ? 'bg-secondary text-white'
+                  : 'text-gray-300 hover:bg-primary-hover hover:text-white'
               )}
             >
               <Icon className="h-4 w-4" />
@@ -53,14 +53,14 @@ export function Sidebar() {
         })}
       </nav>
 
-      <div className="px-3 py-4 border-t border-gray-800">
+      <div className="px-3 py-4 border-t border-primary-hover">
         <div className="px-3 py-2 mb-2">
           <p className="text-white text-sm font-medium">{user?.full_name || user?.username}</p>
-          <p className="text-gray-400 text-xs">{user?.email}</p>
+          <p className="text-gray-300 text-xs">{user?.email}</p>
         </div>
         <button
           onClick={logout}
-          className="flex items-center gap-3 px-3 py-2.5 rounded-md text-sm font-medium text-gray-300 hover:bg-gray-800 hover:text-white w-full"
+          className="flex items-center gap-3 px-3 py-2.5 rounded-md text-sm font-medium text-gray-300 hover:bg-primary-hover hover:text-white w-full"
         >
           <LogOut className="h-4 w-4" />
           Log out
