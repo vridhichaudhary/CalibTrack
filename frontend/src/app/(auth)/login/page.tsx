@@ -231,7 +231,7 @@ export default function LoginPage() {
                     value={loginUsername}
                     onChange={(e) => setLoginUsername(e.target.value)}
                     required
-                    className="w-full px-4 py-2.5 rounded-lg border border-gray-300 text-sm outline-none"
+                    className="w-full px-4 py-2.5 rounded-lg border border-gray-300 text-sm outline-none text-gray-900 bg-white"
                     style={{ fontFamily: 'inherit' }}
                     onFocus={(e) => (e.target.style.borderColor = '#2C3482')}
                     onBlur={(e) => (e.target.style.borderColor = '#D1D5DB')}
@@ -245,7 +245,7 @@ export default function LoginPage() {
                     value={loginPassword}
                     onChange={(e) => setLoginPassword(e.target.value)}
                     required
-                    className="w-full px-4 py-2.5 rounded-lg border border-gray-300 text-sm outline-none"
+                    className="w-full px-4 py-2.5 rounded-lg border border-gray-300 text-sm outline-none text-gray-900 bg-white"
                     style={{ fontFamily: 'inherit' }}
                     onFocus={(e) => (e.target.style.borderColor = '#2C3482')}
                     onBlur={(e) => (e.target.style.borderColor = '#D1D5DB')}
@@ -296,7 +296,7 @@ export default function LoginPage() {
                     value={signupFullName}
                     onChange={(e) => setSignupFullName(e.target.value)}
                     required
-                    className="w-full px-4 py-2.5 rounded-lg border border-gray-300 text-sm outline-none"
+                    className="w-full px-4 py-2.5 rounded-lg border border-gray-300 text-sm outline-none text-gray-900 bg-white"
                     style={{ fontFamily: 'inherit' }}
                     onFocus={(e) => (e.target.style.borderColor = '#2C3482')}
                     onBlur={(e) => (e.target.style.borderColor = '#D1D5DB')}
@@ -310,7 +310,7 @@ export default function LoginPage() {
                     value={signupUsername}
                     onChange={(e) => setSignupUsername(e.target.value)}
                     required
-                    className="w-full px-4 py-2.5 rounded-lg border border-gray-300 text-sm outline-none"
+                    className="w-full px-4 py-2.5 rounded-lg border border-gray-300 text-sm outline-none text-gray-900 bg-white"
                     style={{ fontFamily: 'inherit' }}
                     onFocus={(e) => (e.target.style.borderColor = '#2C3482')}
                     onBlur={(e) => (e.target.style.borderColor = '#D1D5DB')}
@@ -324,7 +324,7 @@ export default function LoginPage() {
                     value={signupEmail}
                     onChange={(e) => setSignupEmail(e.target.value)}
                     required
-                    className="w-full px-4 py-2.5 rounded-lg border border-gray-300 text-sm outline-none"
+                    className="w-full px-4 py-2.5 rounded-lg border border-gray-300 text-sm outline-none text-gray-900 bg-white"
                     style={{ fontFamily: 'inherit' }}
                     onFocus={(e) => (e.target.style.borderColor = '#2C3482')}
                     onBlur={(e) => (e.target.style.borderColor = '#D1D5DB')}
@@ -340,7 +340,7 @@ export default function LoginPage() {
                       onChange={(e) => setSignupPassword(e.target.value)}
                       required
                       minLength={8}
-                      className="w-full px-4 py-2.5 rounded-lg border border-gray-300 text-sm outline-none"
+                      className="w-full px-4 py-2.5 rounded-lg border border-gray-300 text-sm outline-none text-gray-900 bg-white"
                       style={{ fontFamily: 'inherit' }}
                       onFocus={(e) => (e.target.style.borderColor = '#2C3482')}
                       onBlur={(e) => (e.target.style.borderColor = '#D1D5DB')}
@@ -354,7 +354,7 @@ export default function LoginPage() {
                       value={signupConfirm}
                       onChange={(e) => setSignupConfirm(e.target.value)}
                       required
-                      className="w-full px-4 py-2.5 rounded-lg border border-gray-300 text-sm outline-none"
+                      className="w-full px-4 py-2.5 rounded-lg border border-gray-300 text-sm outline-none text-gray-900 bg-white"
                       style={{ fontFamily: 'inherit' }}
                       onFocus={(e) => (e.target.style.borderColor = '#2C3482')}
                       onBlur={(e) => (e.target.style.borderColor = '#D1D5DB')}
