@@ -56,60 +56,69 @@ def check_calibration_due_dates(self):
     for record in active_records:
         remaining_days = (record.calibration_due_date - today).days
 
-        for threshold, trigger_type, template_name in THRESHOLDS:
-            if remaining_days > threshold:
+        # Find the most urgent threshold that applies
+        applicable_threshold = None
+        for threshold, trigger_type, template_name in sorted(THRESHOLDS, key=lambda x: x[0]):
+            # sorted ascending: 20, 30, 90
+            if remaining_days <= threshold:
+                applicable_threshold = (threshold, trigger_type, template_name)
+                break
+        
+        if not applicable_threshold:
+            continue
+            
+        threshold, trigger_type, template_name = applicable_threshold
+
+        for recipient in active_recipients:
+            already_sent = NotificationLog.objects.filter(
+                calibration_record=record,
+                trigger_type=trigger_type,
+                recipient_email=recipient.email,
+                year=current_year,
+                status='SUCCESS'
+            ).exists()
+
+            if already_sent:
+                total_skipped += 1
                 continue
 
-            for recipient in active_recipients:
-                already_sent = NotificationLog.objects.filter(
+            try:
+                send_single_alert_email(
+                    record=record,
+                    recipient=recipient,
+                    trigger_type=trigger_type,
+                    template_name=template_name,
+                    remaining_days=remaining_days
+                )
+                NotificationLog.objects.create(
+                    instrument=record.instrument,
                     calibration_record=record,
                     trigger_type=trigger_type,
                     recipient_email=recipient.email,
+                    status='SUCCESS',
                     year=current_year,
-                    status='SUCCESS'
-                ).exists()
-
-                if already_sent:
-                    total_skipped += 1
-                    continue
-
-                try:
-                    send_single_alert_email(
-                        record=record,
-                        recipient=recipient,
-                        trigger_type=trigger_type,
-                        template_name=template_name,
-                        remaining_days=remaining_days
-                    )
-                    NotificationLog.objects.create(
-                        instrument=record.instrument,
-                        calibration_record=record,
-                        trigger_type=trigger_type,
-                        recipient_email=recipient.email,
-                        status='SUCCESS',
-                        year=current_year,
-                    )
-                    total_sent += 1
-                    logger.info(
-                        f"Alert sent: {record.instrument.name} "
-                        f"({record.instrument.serial_number}) | {trigger_type} | "
-                        f"to {recipient.email}"
-                    )
-                except Exception as e:
-                    NotificationLog.objects.create(
-                        instrument=record.instrument,
-                        calibration_record=record,
-                        trigger_type=trigger_type,
-                        recipient_email=recipient.email,
-                        status='FAILED',
-                        error_message=str(e),
-                        year=current_year,
-                    )
-                    total_failed += 1
-                    logger.error(
-                        f"Failed to send alert for {record.instrument.name} "
-                        f"to {recipient.email}: {e}"
-                    )
+                )
+                total_sent += 1
+                logger.info(
+                    f"Alert sent: {record.instrument.name} "
+                    f"({record.instrument.serial_number}) | {trigger_type} | "
+                    f"to {recipient.email}"
+                )
+            except Exception as e:
+                NotificationLog.objects.create(
+                    instrument=record.instrument,
+                    calibration_record=record,
+                    trigger_type=trigger_type,
+                    recipient_email=recipient.email,
+                    status='FAILED',
+                    error_message=str(e),
+                    year=current_year,
+                )
+                total_failed += 1
+                logger.error(
+                    f"Failed to send alert for {record.instrument.name} "
+                    f"to {recipient.email}: {e}"
+                )
 
     summary = (
         f"Notification run complete. Sent: {total_sent}, "
