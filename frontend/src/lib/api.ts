@@ -4,7 +4,12 @@ import axios, {
   InternalAxiosRequestConfig,
 } from 'axios';
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000/api/v1';
+let rawApiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000/api/v1';
+// Ensure the URL ends with /api/v1 if it was omitted in Vercel
+if (rawApiUrl && !rawApiUrl.endsWith('/api/v1') && !rawApiUrl.endsWith('/api/v1/')) {
+  rawApiUrl = `${rawApiUrl.replace(/\/$/, '')}/api/v1`;
+}
+const API_BASE_URL = rawApiUrl;
 
 const api: AxiosInstance = axios.create({
   baseURL: API_BASE_URL,
