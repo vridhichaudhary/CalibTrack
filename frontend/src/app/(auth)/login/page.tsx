@@ -2,118 +2,383 @@
 
 import { useState, FormEvent } from 'react';
 import { useAuth } from '@/hooks/useAuth';
-import { Button } from '@/components/ui/Button';
-import { Input } from '@/components/ui/Input';
 
 export default function LoginPage() {
-  const [username, setUsername] = useState('');
-  const [password, setPassword] = useState('');
-  const [error, setError] = useState('');
-  const { login } = useAuth();
+  const [tab, setTab] = useState<'login' | 'signup'>('login');
 
-  async function handleSubmit(e: FormEvent) {
+  // Login state
+  const [loginUsername, setLoginUsername] = useState('');
+  const [loginPassword, setLoginPassword] = useState('');
+  const [loginError, setLoginError] = useState('');
+  const [loginLoading, setLoginLoading] = useState(false);
+
+  // Signup state
+  const [signupFullName, setSignupFullName] = useState('');
+  const [signupUsername, setSignupUsername] = useState('');
+  const [signupEmail, setSignupEmail] = useState('');
+  const [signupPassword, setSignupPassword] = useState('');
+  const [signupConfirm, setSignupConfirm] = useState('');
+  const [signupError, setSignupError] = useState('');
+  const [signupLoading, setSignupLoading] = useState(false);
+
+  const { login, register } = useAuth();
+
+  async function handleLogin(e: FormEvent) {
     e.preventDefault();
-    setError('');
+    setLoginError('');
+    setLoginLoading(true);
     try {
-      await login(username, password);
+      await login(loginUsername, loginPassword);
     } catch (err: any) {
-      setError(err.response?.data?.error?.detail || 'Invalid username or password. Please try again.');
+      const detail =
+        err.response?.data?.detail ||
+        err.response?.data?.error?.detail ||
+        'Invalid username or password.';
+      setLoginError(detail);
+    } finally {
+      setLoginLoading(false);
+    }
+  }
+
+  async function handleSignup(e: FormEvent) {
+    e.preventDefault();
+    setSignupError('');
+    if (signupPassword !== signupConfirm) {
+      setSignupError('Passwords do not match.');
+      return;
+    }
+    setSignupLoading(true);
+    try {
+      await register({
+        full_name: signupFullName,
+        username: signupUsername,
+        email: signupEmail,
+        password: signupPassword,
+        confirm_password: signupConfirm,
+      });
+    } catch (err: any) {
+      const data = err.response?.data;
+      if (data) {
+        const firstError = Object.values(data)[0];
+        setSignupError(
+          Array.isArray(firstError) ? firstError[0] : String(firstError)
+        );
+      } else {
+        setSignupError('Registration failed. Please try again.');
+      }
+    } finally {
+      setSignupLoading(false);
     }
   }
 
   return (
-    <div className="min-h-screen flex bg-neutral">
-      {/* Left Panel: Branding */}
-      <div className="hidden lg:flex lg:w-1/2 bg-primary relative items-center justify-center overflow-hidden">
-        {/* Subtle decorative background pattern */}
-        <div className="absolute inset-0 opacity-10" style={{
-          backgroundImage: 'radial-gradient(circle at 2px 2px, white 1px, transparent 0)',
-          backgroundSize: '32px 32px'
-        }} />
-        
+    <div className="min-h-screen flex" style={{ backgroundColor: '#F8F9FA' }}>
+
+      {/* ── Left Panel: IOCL Branding ── */}
+      <div
+        className="hidden lg:flex lg:w-1/2 relative items-center justify-center overflow-hidden"
+        style={{ backgroundColor: '#2C3482' }}
+      >
+        {/* Dot-grid background */}
+        <div
+          className="absolute inset-0"
+          style={{
+            backgroundImage:
+              'radial-gradient(circle, rgba(255,255,255,0.12) 1px, transparent 1px)',
+            backgroundSize: '28px 28px',
+          }}
+        />
+        {/* Decorative orange circles */}
+        <div
+          className="absolute -bottom-24 -right-24 w-96 h-96 rounded-full opacity-20"
+          style={{ backgroundColor: '#F37021' }}
+        />
+        <div
+          className="absolute -top-16 -left-16 w-64 h-64 rounded-full opacity-10"
+          style={{ backgroundColor: '#F37021' }}
+        />
+
         <div className="relative z-10 flex flex-col items-center px-12 text-center text-white">
-          <div className="bg-white p-4 rounded-xl mb-8 shadow-2xl ring-4 ring-white/10">
-            {/* Fallback to a common high-res IOCL logo URL. User can replace src with /logo.png later */}
-            <img 
-              src="https://upload.wikimedia.org/wikipedia/en/thumb/f/fa/Indian_Oil_Logo.svg/1200px-Indian_Oil_Logo.svg.png" 
-              alt="IndianOil" 
-              className="w-32 h-32 object-contain"
+          {/* Logo container */}
+          <div
+            className="flex items-center justify-center w-40 h-40 rounded-2xl mb-8 shadow-2xl"
+            style={{ backgroundColor: 'white', padding: '12px' }}
+          >
+            <img
+              src="/iocl-logo.png"
+              alt="IndianOil"
+              className="w-full h-full object-contain"
+              onError={(e) => {
+                const el = e.target as HTMLImageElement;
+                el.style.display = 'none';
+                el.parentElement!.innerHTML =
+                  '<div style="width:100%;height:100%;border-radius:50%;background:#F37021;display:flex;align-items:center;justify-content:center;color:white;font-weight:700;font-size:13px;text-align:center;line-height:1.4">इंडियन<br/>ऑयल</div>';
+              }}
             />
           </div>
-          <h1 className="text-4xl font-bold tracking-tight mb-4">
-            Industrial Integrity System
+
+          <div
+            className="w-12 h-1 rounded-full mb-6"
+            style={{ backgroundColor: '#F37021' }}
+          />
+
+          <h1 className="text-4xl font-bold tracking-tight mb-4 leading-tight">
+            Industrial<br />Integrity System
           </h1>
-          <p className="text-lg text-blue-100 max-w-md">
+          <p
+            className="text-lg max-w-sm leading-relaxed"
+            style={{ color: 'rgba(255,255,255,0.75)' }}
+          >
             Advanced calibration tracking and alert management for enterprise instrumentation.
           </p>
+
+          {/* Stats strip */}
+          <div className="flex gap-8 mt-12 pt-8 border-t border-white/20 w-full justify-center">
+            <div className="text-center">
+              <p className="text-2xl font-bold" style={{ color: '#F37021' }}>3-Tier</p>
+              <p className="text-xs mt-1" style={{ color: 'rgba(255,255,255,0.6)' }}>Alert System</p>
+            </div>
+            <div className="text-center">
+              <p className="text-2xl font-bold" style={{ color: '#F37021' }}>24/7</p>
+              <p className="text-xs mt-1" style={{ color: 'rgba(255,255,255,0.6)' }}>Monitoring</p>
+            </div>
+            <div className="text-center">
+              <p className="text-2xl font-bold" style={{ color: '#F37021' }}>100%</p>
+              <p className="text-xs mt-1" style={{ color: 'rgba(255,255,255,0.6)' }}>Secure</p>
+            </div>
+          </div>
         </div>
       </div>
 
-      {/* Right Panel: Login Form */}
-      <div className="flex-1 flex flex-col justify-center px-8 sm:px-12 lg:px-24">
+      {/* ── Right Panel: Auth Forms ── */}
+      <div className="flex-1 flex flex-col justify-center px-8 sm:px-12 lg:px-16 xl:px-24">
         <div className="w-full max-w-md mx-auto">
-          {/* Mobile Logo Header */}
-          <div className="lg:hidden flex flex-col items-center mb-10">
-            <img 
-              src="https://upload.wikimedia.org/wikipedia/en/thumb/f/fa/Indian_Oil_Logo.svg/1200px-Indian_Oil_Logo.svg.png" 
-              alt="IndianOil" 
-              className="w-20 h-20 mb-4"
-            />
-            <h1 className="text-2xl font-bold text-gray-900 text-center">
+
+          {/* Mobile logo */}
+          <div className="lg:hidden flex flex-col items-center mb-8">
+            <div
+              className="w-16 h-16 rounded-xl flex items-center justify-center mb-4 shadow-lg"
+              style={{ backgroundColor: '#2C3482', padding: '8px' }}
+            >
+              <img
+                src="/iocl-logo.png"
+                alt="IndianOil"
+                className="w-full h-full object-contain"
+                onError={(e) => {
+                  (e.target as HTMLImageElement).style.display = 'none';
+                }}
+              />
+            </div>
+            <h1 className="text-xl font-bold text-center" style={{ color: '#2C3482' }}>
               Industrial Integrity System
             </h1>
           </div>
 
-          <div className="mb-10 text-center lg:text-left">
-            <h2 className="text-3xl font-bold text-gray-900 mb-2">Welcome Back</h2>
-            <p className="text-gray-500">Sign in to access the CalibTrack portal.</p>
+          {/* Tab Switcher */}
+          <div
+            className="flex rounded-xl p-1 mb-8"
+            style={{ backgroundColor: '#E9ECEF' }}
+          >
+            <button
+              type="button"
+              onClick={() => { setTab('login'); setLoginError(''); }}
+              className="flex-1 py-2.5 rounded-lg text-sm font-semibold transition-all duration-200"
+              style={
+                tab === 'login'
+                  ? { backgroundColor: 'white', color: '#2C3482', boxShadow: '0 1px 4px rgba(0,0,0,0.12)' }
+                  : { color: '#6B7280', backgroundColor: 'transparent' }
+              }
+            >
+              Sign In
+            </button>
+            <button
+              type="button"
+              onClick={() => { setTab('signup'); setSignupError(''); }}
+              className="flex-1 py-2.5 rounded-lg text-sm font-semibold transition-all duration-200"
+              style={
+                tab === 'signup'
+                  ? { backgroundColor: 'white', color: '#2C3482', boxShadow: '0 1px 4px rgba(0,0,0,0.12)' }
+                  : { color: '#6B7280', backgroundColor: 'transparent' }
+              }
+            >
+              Create Account
+            </button>
           </div>
 
-          <form onSubmit={handleSubmit} className="space-y-6">
-            {error && (
-              <div className="p-4 bg-red-50 border-l-4 border-red-500 rounded-r-md">
-                <p className="text-sm text-red-700 font-medium">{error}</p>
+          {/* ── LOGIN FORM ── */}
+          {tab === 'login' && (
+            <div>
+              <div className="mb-7">
+                <h2 className="text-2xl font-bold text-gray-900">Welcome back</h2>
+                <p className="text-gray-500 text-sm mt-1">Sign in to access your dashboard.</p>
               </div>
-            )}
 
+              {loginError && (
+                <div
+                  className="mb-5 p-3.5 rounded-lg border-l-4 text-sm font-medium"
+                  style={{ backgroundColor: '#FEF2F2', borderColor: '#EF4444', color: '#B91C1C' }}
+                >
+                  {loginError}
+                </div>
+              )}
+
+              <form onSubmit={handleLogin} className="space-y-5">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1.5">Username</label>
+                  <input
+                    type="text"
+                    placeholder="Enter your username"
+                    value={loginUsername}
+                    onChange={(e) => setLoginUsername(e.target.value)}
+                    required
+                    className="w-full px-4 py-2.5 rounded-lg border border-gray-300 text-sm outline-none"
+                    style={{ fontFamily: 'inherit' }}
+                    onFocus={(e) => (e.target.style.borderColor = '#2C3482')}
+                    onBlur={(e) => (e.target.style.borderColor = '#D1D5DB')}
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1.5">Password</label>
+                  <input
+                    type="password"
+                    placeholder="••••••••"
+                    value={loginPassword}
+                    onChange={(e) => setLoginPassword(e.target.value)}
+                    required
+                    className="w-full px-4 py-2.5 rounded-lg border border-gray-300 text-sm outline-none"
+                    style={{ fontFamily: 'inherit' }}
+                    onFocus={(e) => (e.target.style.borderColor = '#2C3482')}
+                    onBlur={(e) => (e.target.style.borderColor = '#D1D5DB')}
+                  />
+                </div>
+                <button
+                  type="submit"
+                  disabled={loginLoading}
+                  className="w-full py-2.5 rounded-lg text-white text-sm font-semibold transition-all"
+                  style={{
+                    backgroundColor: loginLoading ? '#6B7280' : '#2C3482',
+                    cursor: loginLoading ? 'not-allowed' : 'pointer',
+                  }}
+                >
+                  {loginLoading ? 'Signing in…' : 'Sign In →'}
+                </button>
+              </form>
+
+              <p className="text-center text-xs text-gray-400 mt-6">
+                Protected system · Authorized personnel only
+              </p>
+            </div>
+          )}
+
+          {/* ── SIGNUP FORM ── */}
+          {tab === 'signup' && (
             <div>
-              <Input
-                label="Username"
-                type="text"
-                placeholder="Enter your username"
-                value={username}
-                onChange={(e) => setUsername(e.target.value)}
-                required
-                className="w-full"
-              />
-            </div>
+              <div className="mb-7">
+                <h2 className="text-2xl font-bold text-gray-900">Create your account</h2>
+                <p className="text-gray-500 text-sm mt-1">Join as a User to view instrument data.</p>
+              </div>
 
-            <div>
-              <Input
-                label="Password"
-                type="password"
-                placeholder="••••••••"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                required
-                className="w-full"
-              />
-            </div>
+              {signupError && (
+                <div
+                  className="mb-5 p-3.5 rounded-lg border-l-4 text-sm font-medium"
+                  style={{ backgroundColor: '#FEF2F2', borderColor: '#EF4444', color: '#B91C1C' }}
+                >
+                  {signupError}
+                </div>
+              )}
 
-            <div className="pt-2">
-              <Button 
-                type="submit" 
-                variant="primary" 
-                className="w-full py-2.5 text-base shadow-lg shadow-primary/20"
-              >
-                Sign in to Dashboard
-              </Button>
+              <form onSubmit={handleSignup} className="space-y-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1.5">Full Name</label>
+                  <input
+                    type="text"
+                    placeholder="Your full name"
+                    value={signupFullName}
+                    onChange={(e) => setSignupFullName(e.target.value)}
+                    required
+                    className="w-full px-4 py-2.5 rounded-lg border border-gray-300 text-sm outline-none"
+                    style={{ fontFamily: 'inherit' }}
+                    onFocus={(e) => (e.target.style.borderColor = '#2C3482')}
+                    onBlur={(e) => (e.target.style.borderColor = '#D1D5DB')}
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1.5">Username</label>
+                  <input
+                    type="text"
+                    placeholder="Choose a username"
+                    value={signupUsername}
+                    onChange={(e) => setSignupUsername(e.target.value)}
+                    required
+                    className="w-full px-4 py-2.5 rounded-lg border border-gray-300 text-sm outline-none"
+                    style={{ fontFamily: 'inherit' }}
+                    onFocus={(e) => (e.target.style.borderColor = '#2C3482')}
+                    onBlur={(e) => (e.target.style.borderColor = '#D1D5DB')}
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1.5">Email</label>
+                  <input
+                    type="email"
+                    placeholder="your@email.com"
+                    value={signupEmail}
+                    onChange={(e) => setSignupEmail(e.target.value)}
+                    required
+                    className="w-full px-4 py-2.5 rounded-lg border border-gray-300 text-sm outline-none"
+                    style={{ fontFamily: 'inherit' }}
+                    onFocus={(e) => (e.target.style.borderColor = '#2C3482')}
+                    onBlur={(e) => (e.target.style.borderColor = '#D1D5DB')}
+                  />
+                </div>
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1.5">Password</label>
+                    <input
+                      type="password"
+                      placeholder="Min 8 chars"
+                      value={signupPassword}
+                      onChange={(e) => setSignupPassword(e.target.value)}
+                      required
+                      minLength={8}
+                      className="w-full px-4 py-2.5 rounded-lg border border-gray-300 text-sm outline-none"
+                      style={{ fontFamily: 'inherit' }}
+                      onFocus={(e) => (e.target.style.borderColor = '#2C3482')}
+                      onBlur={(e) => (e.target.style.borderColor = '#D1D5DB')}
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1.5">Confirm</label>
+                    <input
+                      type="password"
+                      placeholder="Repeat password"
+                      value={signupConfirm}
+                      onChange={(e) => setSignupConfirm(e.target.value)}
+                      required
+                      className="w-full px-4 py-2.5 rounded-lg border border-gray-300 text-sm outline-none"
+                      style={{ fontFamily: 'inherit' }}
+                      onFocus={(e) => (e.target.style.borderColor = '#2C3482')}
+                      onBlur={(e) => (e.target.style.borderColor = '#D1D5DB')}
+                    />
+                  </div>
+                </div>
+                <button
+                  type="submit"
+                  disabled={signupLoading}
+                  className="w-full py-2.5 rounded-lg text-white text-sm font-semibold transition-all"
+                  style={{
+                    backgroundColor: signupLoading ? '#6B7280' : '#F37021',
+                    cursor: signupLoading ? 'not-allowed' : 'pointer',
+                  }}
+                >
+                  {signupLoading ? 'Creating account…' : 'Create Account →'}
+                </button>
+              </form>
+
+              <p className="text-center text-xs text-gray-400 mt-5">
+                You will be registered as a <strong>User</strong>. For Admin access, contact the system administrator.
+              </p>
             </div>
-            
-            <p className="text-center text-sm text-gray-500 mt-6">
-              Protected system. Authorized personnel only.
-            </p>
-          </form>
+          )}
         </div>
       </div>
     </div>

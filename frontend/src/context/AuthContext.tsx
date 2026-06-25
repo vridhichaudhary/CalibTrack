@@ -16,6 +16,7 @@ interface AuthContextType {
   isLoading: boolean;
   isAuthenticated: boolean;
   login: (username: string, password: string) => Promise<void>;
+  register: (data: { username: string; email: string; full_name: string; password: string; confirm_password: string }) => Promise<void>;
   logout: () => Promise<void>;
 }
 
@@ -69,6 +70,20 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   }
 
+  async function register(data: { username: string; email: string; full_name: string; password: string; confirm_password: string }) {
+    const response = await api.post<AuthResponse>('/auth/register/', data);
+
+    const { access, refresh, user: newUser } = response.data.data;
+
+    setTokens(access, refresh);
+    localStorage.setItem('user', JSON.stringify(newUser));
+    setUser(newUser);
+    document.cookie = `user_role=${newUser.role}; path=/; max-age=604800; SameSite=Lax`;
+
+    // Registered users always go to the user dashboard
+    router.push('/dashboard');
+  }
+
   async function logout() {
     const refreshToken = localStorage.getItem('refresh_token');
 
@@ -93,6 +108,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         isLoading,
         isAuthenticated: !!user,
         login,
+        register,
         logout,
       }}
     >

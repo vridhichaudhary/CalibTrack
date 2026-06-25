@@ -99,6 +99,60 @@ class UserCreateSerializer(serializers.ModelSerializer):
         return user
 
 
+class PublicRegisterSerializer(serializers.ModelSerializer):
+    """
+    Used for self-registration by any visitor.
+    Role is ALWAYS forced to 'user' — no one can self-assign admin.
+    Includes full_name, username, email, password, confirm_password.
+    """
+
+    password = serializers.CharField(
+        write_only=True,
+        min_length=8,
+        style={'input_type': 'password'}
+    )
+    confirm_password = serializers.CharField(
+        write_only=True,
+        style={'input_type': 'password'}
+    )
+
+    class Meta:
+        model = User
+        fields = [
+            'username',
+            'email',
+            'full_name',
+            'password',
+            'confirm_password',
+        ]
+
+    def validate_username(self, value):
+        if User.objects.filter(username=value).exists():
+            raise serializers.ValidationError('This username is already taken.')
+        return value
+
+    def validate_email(self, value):
+        if User.objects.filter(email=value).exists():
+            raise serializers.ValidationError('An account with this email already exists.')
+        return value
+
+    def validate(self, attrs):
+        if attrs['password'] != attrs['confirm_password']:
+            raise serializers.ValidationError({
+                'confirm_password': 'Passwords do not match.'
+            })
+        return attrs
+
+    def create(self, validated_data):
+        validated_data.pop('confirm_password')
+        password = validated_data.pop('password')
+        # SECURITY: role is always 'user' regardless of any input
+        user = User(role='user', **validated_data)
+        user.set_password(password)
+        user.save()
+        return user
+
+
 class ChangePasswordSerializer(serializers.Serializer):
     """
     Allows a logged-in user to change their own password.

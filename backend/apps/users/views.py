@@ -11,6 +11,7 @@ from .serializers import (
     CustomTokenObtainPairSerializer,
     UserSerializer,
     UserCreateSerializer,
+    PublicRegisterSerializer,
     ChangePasswordSerializer,
 )
 from .permissions import IsAdminRole
@@ -203,3 +204,44 @@ class ChangePasswordView(APIView):
             'success': True,
             'message': 'Password changed successfully. Please log in again.'
         }, status=status.HTTP_200_OK)
+
+
+class PublicRegisterView(generics.CreateAPIView):
+    """
+    POST /api/v1/auth/register/
+    Open to anyone. Creates a new account with role='user'.
+    Role is hardcoded server-side — cannot be overridden by the client.
+    Returns access + refresh tokens immediately so user is logged in after signup.
+    """
+    permission_classes = [AllowAny]
+    serializer_class = PublicRegisterSerializer
+
+    def create(self, request, *args, **kwargs):
+        serializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        user = serializer.save()
+
+        # Issue JWT tokens immediately so the user is logged in right after signup
+        refresh = RefreshToken.for_user(user)
+        refresh['role'] = user.role
+        refresh['username'] = user.username
+        refresh['full_name'] = user.full_name
+        refresh['email'] = user.email
+
+        logger.info(f"New public registration: {user.username}")
+
+        return Response({
+            'success': True,
+            'message': 'Account created successfully.',
+            'data': {
+                'access': str(refresh.access_token),
+                'refresh': str(refresh),
+                'user': {
+                    'id': str(user.id),
+                    'username': user.username,
+                    'email': user.email,
+                    'full_name': user.full_name,
+                    'role': user.role,
+                }
+            }
+        }, status=status.HTTP_201_CREATED)
