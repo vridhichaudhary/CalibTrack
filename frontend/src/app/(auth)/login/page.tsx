@@ -57,12 +57,15 @@ export default function LoginPage() {
         confirm_password: signupConfirm,
       });
     } catch (err: any) {
-      const data = err.response?.data;
-      if (data) {
-        const firstError = Object.values(data)[0];
+      const detail = err.response?.data?.error?.detail;
+      if (detail && typeof detail === 'object') {
+        const firstErrorKey = Object.keys(detail)[0];
+        const firstErrorMessage = detail[firstErrorKey];
         setSignupError(
-          Array.isArray(firstError) ? firstError[0] : String(firstError)
+          Array.isArray(firstErrorMessage) ? firstErrorMessage[0] : String(firstErrorMessage)
         );
+      } else if (typeof detail === 'string') {
+        setSignupError(detail);
       } else {
         setSignupError('Registration failed. Please try again.');
       }
