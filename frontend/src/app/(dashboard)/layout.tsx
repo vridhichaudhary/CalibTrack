@@ -33,12 +33,13 @@ export default function DashboardLayout({
     return (
       <div className="flex items-center justify-center min-h-screen text-gray-400">
         Loading...
+        <div className="hidden">{children}</div>
       </div>
     );
   }
 
   if (!isAuthenticated) {
-    return null;
+    return <div className="hidden">{children}</div>;
   }
 
   return (
