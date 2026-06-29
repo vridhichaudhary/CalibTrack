@@ -11,6 +11,11 @@ def validate_report_file(file):
         raise ValidationError('Uploaded file is empty.')
 
 
+# Keep old name as alias so existing migrations (0001_initial) don't break
+validate_pdf_file = validate_report_file
+
+
+
 def _next_serial_number():
     """Auto-generate the next sequential serial number like INST-0001."""
     last = Instrument.objects.order_by('-created_at').values_list('serial_number', flat=True).first()
