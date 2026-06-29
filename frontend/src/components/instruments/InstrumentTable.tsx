@@ -6,6 +6,9 @@ import { Search, ArrowUpDown, FileText, MapPin } from 'lucide-react';
 import { useInstruments } from '@/hooks/useInstruments';
 import { Badge } from '@/components/ui/Badge';
 import { Pagination } from '@/components/ui/Pagination';
+import { useAuth } from '@/hooks/useAuth';
+import api from '@/lib/api';
+import { InstrumentDetailModal } from './InstrumentDetailModal';
 import { formatDate, getAlertStatusStyles, classNames, debounce } from '@/lib/utils';
 import { AlertStatus } from '@/types';
 
@@ -32,8 +35,12 @@ export function InstrumentTable() {
   const [page, setPage] = useState(1);
   const [ordering, setOrdering] = useState('next_due_date');
   const [alertFilter, setAlertFilter] = useState<AlertStatus | ''>('');
+  const [selectedInstrumentId, setSelectedInstrumentId] = useState<string | null>(null);
 
-  const { instruments, totalCount, totalPages, currentPage, isLoading, error } =
+  const { user } = useAuth();
+  const isAdmin = user?.role === 'admin';
+
+  const { instruments, totalCount, totalPages, currentPage, isLoading, error, refetch } =
     useInstruments({
       page,
       pageSize: 20,
@@ -63,6 +70,16 @@ export function InstrumentTable() {
     setPage(1);
   }
 
+  async function handleDelete(id: string) {
+    if (!confirm('Are you sure you want to delete this instrument?')) return;
+    try {
+      await api.delete(`/instruments/${id}/`);
+      refetch();
+    } catch (err) {
+      alert('Failed to delete instrument. Please try again.');
+    }
+  }
+
   return (
     <div className="bg-white rounded-lg shadow-sm border border-gray-200">
       <div className="p-4 border-b border-gray-200 flex flex-wrap gap-3 items-center justify-between">
@@ -70,10 +87,10 @@ export function InstrumentTable() {
           <Search className="absolute left-3 top-2.5 h-4 w-4 text-gray-400" />
           <input
             type="text"
-            placeholder="Search by name, serial number, location..."
+            placeholder="Search by name or serial number..."
             value={searchInput}
             onChange={(e) => handleSearchChange(e.target.value)}
-            className="w-full pl-9 pr-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+            className="w-full pl-9 pr-3 py-2 border border-gray-400 rounded-md text-sm text-gray-900 placeholder:text-gray-600 focus:outline-none focus:ring-2 focus:ring-blue-500"
           />
         </div>
 
@@ -112,7 +129,6 @@ export function InstrumentTable() {
                 </div>
               </th>
               <th className="px-4 py-3 text-left">Serial Number</th>
-              <th className="px-4 py-3 text-left">Location</th>
               <th className="px-4 py-3 text-left">Calibrated On</th>
               <th
                 className="px-4 py-3 text-left cursor-pointer hover:text-gray-900"
@@ -124,6 +140,7 @@ export function InstrumentTable() {
               </th>
               <th className="px-4 py-3 text-left">Status</th>
               <th className="px-4 py-3 text-left">Report</th>
+              {isAdmin && <th className="px-4 py-3 text-right">Actions</th>}
             </tr>
           </thead>
           <tbody className="divide-y divide-gray-100">
@@ -137,7 +154,7 @@ export function InstrumentTable() {
 
             {!isLoading && instruments.length === 0 && (
               <tr>
-                <td colSpan={7} className="px-4 py-8 text-center text-gray-400">
+                <td colSpan={isAdmin ? 7 : 6} className="px-4 py-8 text-center text-gray-400">
                   No instruments found.
                 </td>
               </tr>
@@ -156,19 +173,13 @@ export function InstrumentTable() {
                       'cursor-pointer transition-colors',
                       styles.row
                     )}
-                    onClick={() => router.push(`/dashboard/instruments/${instrument.id}`)}
+                    onClick={() => setSelectedInstrumentId(instrument.id)}
                   >
                     <td className="px-4 py-3 font-medium text-gray-900">
                       {instrument.name}
                     </td>
-                    <td className="px-4 py-3 text-gray-600">
+                    <td className="px-4 py-3 text-gray-800 font-medium">
                       {instrument.serial_number}
-                    </td>
-                    <td className="px-4 py-3 text-gray-600">
-                      <div className="flex items-center gap-1">
-                        <MapPin className="h-3.5 w-3.5 text-gray-400" />
-                        {instrument.location}
-                      </div>
                     </td>
                     <td className="px-4 py-3 text-gray-600">
                       {latest ? formatDate(latest.calibrated_on) : '—'}
@@ -194,6 +205,21 @@ export function InstrumentTable() {
                         <span className="text-gray-400">—</span>
                       )}
                     </td>
+                    {isAdmin && (
+                      <td className="px-4 py-3 text-right">
+                        <button
+                          type="button"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleDelete(instrument.id);
+                          }}
+                          className="text-red-500 hover:text-red-700 p-1 rounded-md hover:bg-red-50 transition"
+                          title="Delete instrument"
+                        >
+                          Delete
+                        </button>
+                      </td>
+                    )}
                   </tr>
                 );
               })}
@@ -208,6 +234,14 @@ export function InstrumentTable() {
         pageSize={20}
         onPageChange={setPage}
       />
+
+      {selectedInstrumentId && (
+        <InstrumentDetailModal
+          instrumentId={selectedInstrumentId}
+          isOpen={!!selectedInstrumentId}
+          onClose={() => setSelectedInstrumentId(null)}
+        />
+      )}
     </div>
   );
 }
