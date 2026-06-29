@@ -5,20 +5,23 @@ from django.core.exceptions import ValidationError
 from django.utils import timezone
 
 
-def validate_pdf_file(file):
-    allowed_content_types = ['application/pdf']
-    
-    if not file.name.lower().endswith('.pdf'):
-        raise ValidationError('Only PDF files are allowed.')
-    
-    if hasattr(file, 'content_type') and file.content_type not in allowed_content_types:
-        raise ValidationError('Invalid file type. Only PDF files are allowed.')
-    
-    if file.size > 10 * 1024 * 1024:
-        raise ValidationError('File size cannot exceed 10 MB.')
-    
+def validate_report_file(file):
+    """Validate calibration report file - allow any document type, just reject empty files."""
     if file.size == 0:
         raise ValidationError('Uploaded file is empty.')
+
+
+def _next_serial_number():
+    """Auto-generate the next sequential serial number like INST-0001."""
+    last = Instrument.objects.order_by('-created_at').values_list('serial_number', flat=True).first()
+    if last and last.startswith('INST-'):
+        try:
+            num = int(last.split('-')[1]) + 1
+            return f'INST-{num:04d}'
+        except (IndexError, ValueError):
+            pass
+    count = Instrument.objects.count() + 1
+    return f'INST-{count:04d}'
 
 
 def calibration_report_upload_path(instance, filename):
@@ -48,10 +51,13 @@ class Instrument(models.Model):
     serial_number = models.CharField(
         max_length=100,
         unique=True,
-        db_index=True
+        db_index=True,
+        blank=True
     )
     location = models.CharField(
-        max_length=255
+        max_length=255,
+        blank=True,
+        default=''
     )
     department = models.CharField(
         max_length=255,
@@ -124,7 +130,7 @@ class CalibrationRecord(models.Model):
     )
     report_file = models.FileField(
         upload_to=calibration_report_upload_path,
-        validators=[validate_pdf_file],
+        validators=[validate_report_file],
         null=True,
         blank=True
     )

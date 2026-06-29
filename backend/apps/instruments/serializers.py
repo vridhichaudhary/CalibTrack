@@ -1,6 +1,6 @@
 from rest_framework import serializers
 from django.utils import timezone
-from .models import Instrument, CalibrationRecord
+from .models import Instrument, CalibrationRecord, _next_serial_number
 from apps.users.serializers import UserSerializer
 
 
@@ -193,6 +193,9 @@ class InstrumentDetailSerializer(serializers.ModelSerializer):
 
     def create(self, validated_data):
         validated_data['created_by'] = self.context['request'].user
+        # Auto-generate serial number if not provided
+        if not validated_data.get('serial_number'):
+            validated_data['serial_number'] = _next_serial_number()
         return super().create(validated_data)
 
     def update(self, instance, validated_data):
