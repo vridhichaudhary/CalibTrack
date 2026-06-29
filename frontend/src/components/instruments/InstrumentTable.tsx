@@ -100,7 +100,7 @@ export function InstrumentTable() {
             setAlertFilter(e.target.value as AlertStatus | '');
             setPage(1);
           }}
-          className="border border-gray-300 rounded-md text-sm px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+          className="border border-gray-400 bg-white text-gray-900 rounded-md text-sm px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
         >
           {ALERT_FILTERS.map((filter) => (
             <option key={filter.value} value={filter.value}>
