@@ -156,3 +156,24 @@ def send_single_alert_email(record, recipient, trigger_type, template_name, rema
         html_message=html_message,
         fail_silently=False,
     )
+
+
+@shared_task(bind=True, max_retries=3, default_retry_delay=60)
+def send_test_email(self, recipient_email):
+    """
+    Sends a simple test email to verify that the email configuration works.
+    Triggered manually from the admin UI.
+    """
+    from django.core.mail import send_mail
+    from django.conf import settings
+
+    try:
+        send_mail(
+            subject='CalibTrack — Test Email',
+            message='This is a test email from CalibTrack to verify your email configuration is working correctly.',
+            from_email=settings.DEFAULT_FROM_EMAIL,
+            recipient_list=[recipient_email],
+            fail_silently=False,
+        )
+    except Exception as exc:
+        raise self.retry(exc=exc)
