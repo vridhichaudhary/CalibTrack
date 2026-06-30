@@ -35,6 +35,20 @@ export interface CalibrationRecord {
   created_at: string;
 }
 
+export interface AMCRecord {
+  id: string;
+  instrument: string;
+  maintenance_on: string;
+  due_date: string;
+  notes: string;
+  days_until_due: number;
+  alert_status: AlertStatus;
+  created_by: User | null;
+  created_at: string;
+}
+
+export type CAMCRecord = AMCRecord;
+
 export type InstrumentStatus = 'active' | 'inactive' | 'under_maintenance' | 'decommissioned';
 
 export interface Instrument {
@@ -48,6 +62,10 @@ export interface Instrument {
   is_deleted: boolean;
   calibration_records: CalibrationRecord[];
   latest_calibration: CalibrationRecord | null;
+  amc_records: AMCRecord[];
+  latest_amc: AMCRecord | null;
+  camc_records: CAMCRecord[];
+  latest_camc: CAMCRecord | null;
   created_by: User | null;
   created_at: string;
   updated_at: string;

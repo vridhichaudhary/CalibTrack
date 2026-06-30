@@ -123,10 +123,8 @@ export function InstrumentForm() {
       calibrationFormData.append('calibration_due_date', formData.calibration_due_date);
       if (formData.notes) calibrationFormData.append('notes', formData.notes);
       if (reportFile) calibrationFormData.append('report_file', reportFile);
-
-      await api.post('/instruments/calibrations/', calibrationFormData, {
-        headers: { 'Content-Type': 'multipart/form-data' },
-      });
+      
+      await api.post('/instruments/calibrations/', calibrationFormData);
 
       router.push('/admin/instruments');
     } catch (err: any) {

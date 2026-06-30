@@ -116,6 +116,14 @@ class Instrument(models.Model):
     def latest_calibration(self):
         return self.calibration_records.order_by('-calibration_due_date').first()
 
+    @property
+    def latest_amc(self):
+        return self.amc_records.order_by('-due_date').first()
+
+    @property
+    def latest_camc(self):
+        return self.camc_records.order_by('-due_date').first()
+
 
 class CalibrationRecord(models.Model):
 
@@ -185,4 +193,58 @@ class CalibrationRecord(models.Model):
             return 'warning'
         elif days <= 90:
             return 'upcoming'
+        return 'ok'
+
+class AMCRecord(models.Model):
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    instrument = models.ForeignKey(Instrument, on_delete=models.PROTECT, related_name='amc_records')
+    maintenance_on = models.DateField()
+    due_date = models.DateField(db_index=True)
+    notes = models.TextField(blank=True)
+    created_by = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True, related_name='amc_records_created')
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        db_table = 'amc_records'
+        ordering = ['-due_date']
+
+    @property
+    def days_until_due(self):
+        from django.utils.timezone import now
+        return (self.due_date - now().date()).days
+
+    @property
+    def alert_status(self):
+        days = self.days_until_due
+        if days < 0: return 'overdue'
+        if days <= 20: return 'critical'
+        if days <= 30: return 'warning'
+        if days <= 90: return 'upcoming'
+        return 'ok'
+
+class CAMCRecord(models.Model):
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    instrument = models.ForeignKey(Instrument, on_delete=models.PROTECT, related_name='camc_records')
+    maintenance_on = models.DateField()
+    due_date = models.DateField(db_index=True)
+    notes = models.TextField(blank=True)
+    created_by = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True, related_name='camc_records_created')
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        db_table = 'camc_records'
+        ordering = ['-due_date']
+
+    @property
+    def days_until_due(self):
+        from django.utils.timezone import now
+        return (self.due_date - now().date()).days
+
+    @property
+    def alert_status(self):
+        days = self.days_until_due
+        if days < 0: return 'overdue'
+        if days <= 20: return 'critical'
+        if days <= 30: return 'warning'
+        if days <= 90: return 'upcoming'
         return 'ok'

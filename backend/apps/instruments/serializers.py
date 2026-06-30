@@ -1,18 +1,10 @@
 from rest_framework import serializers
 from django.utils import timezone
-from .models import Instrument, CalibrationRecord, _next_serial_number
+from .models import Instrument, CalibrationRecord, AMCRecord, CAMCRecord, _next_serial_number
 from apps.users.serializers import UserSerializer
 
 
 class CalibrationRecordSerializer(serializers.ModelSerializer):
-    """
-    Full serializer for CalibrationRecord.
-    Used when returning calibration history for an instrument.
-    Includes computed fields: days_until_due and alert_status.
-    report_file_url returns the absolute URL to the PDF file.
-    created_by is read-only and auto-set from the request user.
-    """
-
     days_until_due = serializers.IntegerField(read_only=True)
     alert_status = serializers.CharField(read_only=True)
     created_by = UserSerializer(read_only=True)
@@ -21,30 +13,12 @@ class CalibrationRecordSerializer(serializers.ModelSerializer):
     class Meta:
         model = CalibrationRecord
         fields = [
-            'id',
-            'instrument',
-            'calibrated_on',
-            'calibration_due_date',
-            'report_file',
-            'report_file_url',
-            'notes',
-            'days_until_due',
-            'alert_status',
-            'created_by',
-            'created_at',
+            'id', 'instrument', 'calibrated_on', 'calibration_due_date',
+            'report_file', 'report_file_url', 'notes', 'days_until_due',
+            'alert_status', 'created_by', 'created_at',
         ]
-        read_only_fields = [
-            'id',
-            'created_by',
-            'created_at',
-            'days_until_due',
-            'alert_status',
-            'report_file_url',
-        ]
-        extra_kwargs = {
-            'report_file': {'write_only': True},
-            'instrument': {'required': True},
-        }
+        read_only_fields = ['id', 'created_by', 'created_at', 'days_until_due', 'alert_status', 'report_file_url']
+        extra_kwargs = {'report_file': {'write_only': True}, 'instrument': {'required': True}}
 
     def get_report_file_url(self, obj):
         request = self.context.get('request')
@@ -58,9 +32,7 @@ class CalibrationRecordSerializer(serializers.ModelSerializer):
         if calibrated_on and calibration_due_date:
             if calibration_due_date <= calibrated_on:
                 raise serializers.ValidationError({
-                    'calibration_due_date': (
-                        'Calibration due date must be after the calibrated on date.'
-                    )
+                    'calibration_due_date': 'Calibration due date must be after the calibrated on date.'
                 })
         return attrs
 
@@ -70,12 +42,6 @@ class CalibrationRecordSerializer(serializers.ModelSerializer):
 
 
 class CalibrationRecordListSerializer(serializers.ModelSerializer):
-    """
-    Lightweight serializer for CalibrationRecord.
-    Used in nested lists inside InstrumentDetailSerializer.
-    Does not expand created_by to avoid N+1 queries.
-    """
-
     days_until_due = serializers.IntegerField(read_only=True)
     alert_status = serializers.CharField(read_only=True)
     report_file_url = serializers.SerializerMethodField()
@@ -83,14 +49,8 @@ class CalibrationRecordListSerializer(serializers.ModelSerializer):
     class Meta:
         model = CalibrationRecord
         fields = [
-            'id',
-            'calibrated_on',
-            'calibration_due_date',
-            'report_file_url',
-            'notes',
-            'days_until_due',
-            'alert_status',
-            'created_at',
+            'id', 'calibrated_on', 'calibration_due_date', 'report_file_url',
+            'notes', 'days_until_due', 'alert_status', 'created_at',
         ]
 
     def get_report_file_url(self, obj):
@@ -100,100 +60,163 @@ class CalibrationRecordListSerializer(serializers.ModelSerializer):
         return None
 
 
-class InstrumentListSerializer(serializers.ModelSerializer):
-    """
-    Lightweight serializer used for the instruments list endpoint.
-    Returns the latest calibration record inline so the table
-    can show due date and alert status without a second API call.
-    Uses select_related and prefetch_related in the view to
-    avoid N+1 database queries.
-    """
+class AMCRecordSerializer(serializers.ModelSerializer):
+    days_until_due = serializers.IntegerField(read_only=True)
+    alert_status = serializers.CharField(read_only=True)
+    created_by = UserSerializer(read_only=True)
 
+    class Meta:
+        model = AMCRecord
+        fields = [
+            'id', 'instrument', 'maintenance_on', 'due_date',
+            'notes', 'days_until_due', 'alert_status', 'created_by', 'created_at',
+        ]
+        read_only_fields = ['id', 'created_by', 'created_at', 'days_until_due', 'alert_status']
+        extra_kwargs = {'instrument': {'required': True}}
+
+    def validate(self, attrs):
+        maintenance_on = attrs.get('maintenance_on')
+        due_date = attrs.get('due_date')
+        if maintenance_on and due_date:
+            if due_date <= maintenance_on:
+                raise serializers.ValidationError({'due_date': 'Due date must be after the maintenance on date.'})
+        return attrs
+
+    def create(self, validated_data):
+        validated_data['created_by'] = self.context['request'].user
+        return super().create(validated_data)
+
+
+class AMCRecordListSerializer(serializers.ModelSerializer):
+    days_until_due = serializers.IntegerField(read_only=True)
+    alert_status = serializers.CharField(read_only=True)
+
+    class Meta:
+        model = AMCRecord
+        fields = [
+            'id', 'maintenance_on', 'due_date',
+            'notes', 'days_until_due', 'alert_status', 'created_at',
+        ]
+
+
+class CAMCRecordSerializer(serializers.ModelSerializer):
+    days_until_due = serializers.IntegerField(read_only=True)
+    alert_status = serializers.CharField(read_only=True)
+    created_by = UserSerializer(read_only=True)
+
+    class Meta:
+        model = CAMCRecord
+        fields = [
+            'id', 'instrument', 'maintenance_on', 'due_date',
+            'notes', 'days_until_due', 'alert_status', 'created_by', 'created_at',
+        ]
+        read_only_fields = ['id', 'created_by', 'created_at', 'days_until_due', 'alert_status']
+        extra_kwargs = {'instrument': {'required': True}}
+
+    def validate(self, attrs):
+        maintenance_on = attrs.get('maintenance_on')
+        due_date = attrs.get('due_date')
+        if maintenance_on and due_date:
+            if due_date <= maintenance_on:
+                raise serializers.ValidationError({'due_date': 'Due date must be after the maintenance on date.'})
+        return attrs
+
+    def create(self, validated_data):
+        validated_data['created_by'] = self.context['request'].user
+        return super().create(validated_data)
+
+
+class CAMCRecordListSerializer(serializers.ModelSerializer):
+    days_until_due = serializers.IntegerField(read_only=True)
+    alert_status = serializers.CharField(read_only=True)
+
+    class Meta:
+        model = CAMCRecord
+        fields = [
+            'id', 'maintenance_on', 'due_date',
+            'notes', 'days_until_due', 'alert_status', 'created_at',
+        ]
+
+
+class InstrumentListSerializer(serializers.ModelSerializer):
     latest_calibration = serializers.SerializerMethodField()
+    latest_amc = serializers.SerializerMethodField()
+    latest_camc = serializers.SerializerMethodField()
     created_by = serializers.StringRelatedField(read_only=True)
 
     class Meta:
         model = Instrument
         fields = [
-            'id',
-            'name',
-            'serial_number',
-            'location',
-            'department',
-            'status',
-            'latest_calibration',
-            'created_by',
-            'created_at',
+            'id', 'name', 'serial_number', 'location', 'department',
+            'status', 'latest_calibration', 'latest_amc', 'latest_camc',
+            'created_by', 'created_at',
         ]
 
     def get_latest_calibration(self, obj):
-        record = obj.calibration_records.order_by(
-            '-calibration_due_date'
-        ).first()
+        record = obj.calibration_records.order_by('-calibration_due_date').first()
         if record:
-            return CalibrationRecordListSerializer(
-                record,
-                context=self.context
-            ).data
+            return CalibrationRecordListSerializer(record, context=self.context).data
+        return None
+
+    def get_latest_amc(self, obj):
+        record = obj.amc_records.order_by('-due_date').first()
+        if record:
+            return AMCRecordListSerializer(record, context=self.context).data
+        return None
+
+    def get_latest_camc(self, obj):
+        record = obj.camc_records.order_by('-due_date').first()
+        if record:
+            return CAMCRecordListSerializer(record, context=self.context).data
         return None
 
 
 class InstrumentDetailSerializer(serializers.ModelSerializer):
-    """
-    Full serializer used for instrument detail and create/update.
-    Returns complete calibration history as a nested list.
-    On write operations, only the instrument fields are accepted —
-    calibration records are managed through their own endpoint.
-    """
-
-    calibration_records = CalibrationRecordListSerializer(
-        many=True,
-        read_only=True
-    )
+    calibration_records = CalibrationRecordListSerializer(many=True, read_only=True)
+    amc_records = AMCRecordListSerializer(many=True, read_only=True)
+    camc_records = CAMCRecordListSerializer(many=True, read_only=True)
     created_by = UserSerializer(read_only=True)
     latest_calibration = serializers.SerializerMethodField()
+    latest_amc = serializers.SerializerMethodField()
+    latest_camc = serializers.SerializerMethodField()
 
     class Meta:
         model = Instrument
         fields = [
-            'id',
-            'name',
-            'serial_number',
-            'location',
-            'department',
-            'description',
-            'status',
-            'is_deleted',
-            'calibration_records',
-            'latest_calibration',
-            'created_by',
-            'created_at',
-            'updated_at',
+            'id', 'name', 'serial_number', 'location', 'department',
+            'description', 'status', 'is_deleted',
+            'calibration_records', 'latest_calibration',
+            'amc_records', 'latest_amc',
+            'camc_records', 'latest_camc',
+            'created_by', 'created_at', 'updated_at',
         ]
         read_only_fields = [
-            'id',
-            'is_deleted',
-            'created_by',
-            'created_at',
-            'updated_at',
-            'calibration_records',
-            'latest_calibration',
+            'id', 'is_deleted', 'created_by', 'created_at', 'updated_at',
+            'calibration_records', 'latest_calibration',
+            'amc_records', 'latest_amc',
+            'camc_records', 'latest_camc',
         ]
 
     def get_latest_calibration(self, obj):
-        record = obj.calibration_records.order_by(
-            '-calibration_due_date'
-        ).first()
+        record = obj.calibration_records.order_by('-calibration_due_date').first()
         if record:
-            return CalibrationRecordListSerializer(
-                record,
-                context=self.context
-            ).data
+            return CalibrationRecordListSerializer(record, context=self.context).data
+        return None
+
+    def get_latest_amc(self, obj):
+        record = obj.amc_records.order_by('-due_date').first()
+        if record:
+            return AMCRecordListSerializer(record, context=self.context).data
+        return None
+
+    def get_latest_camc(self, obj):
+        record = obj.camc_records.order_by('-due_date').first()
+        if record:
+            return CAMCRecordListSerializer(record, context=self.context).data
         return None
 
     def create(self, validated_data):
         validated_data['created_by'] = self.context['request'].user
-        # Auto-generate serial number if not provided
         if not validated_data.get('serial_number'):
             validated_data['serial_number'] = _next_serial_number()
         return super().create(validated_data)

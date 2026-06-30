@@ -10,7 +10,7 @@ export default function AdminInstrumentsPage() {
     <div className="max-w-7xl mx-auto px-4 py-8">
       <div className="mb-6 flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-semibold text-gray-900">Instruments</h1>
+          <h1 className="text-2xl font-semibold text-gray-900">Calibration</h1>
           <p className="text-sm text-gray-500 mt-1">
             Manage instruments and their calibration records.
           </p>
@@ -24,7 +24,7 @@ export default function AdminInstrumentsPage() {
         </Link>
       </div>
 
-      <InstrumentTable />
+      <InstrumentTable type="calibration" />
     </div>
   );
 }

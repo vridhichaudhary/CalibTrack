@@ -6,7 +6,7 @@ import { Modal } from '@/components/ui/Modal';
 import { Badge } from '@/components/ui/Badge';
 import { formatDate, getAlertStatusStyles } from '@/lib/utils';
 import api from '@/lib/api';
-import { Instrument, CalibrationRecord } from '@/types';
+import { Instrument, CalibrationRecord, AMCRecord } from '@/types';
 import { useAuth } from '@/hooks/useAuth';
 
 interface Props {
@@ -14,6 +14,7 @@ interface Props {
   isOpen: boolean;
   onClose: () => void;
   onUpdated?: () => void;
+  type?: 'calibration' | 'amc' | 'camc';
 }
 
 const INSTRUMENT_NAMES = [
@@ -49,7 +50,7 @@ const INSTRUMENT_STATUSES = [
   { value: 'decommissioned', label: 'Decommissioned' },
 ];
 
-export function InstrumentDetailModal({ instrumentId, isOpen, onClose, onUpdated }: Props) {
+export function InstrumentDetailModal({ instrumentId, isOpen, onClose, onUpdated, type = 'calibration' }: Props) {
   const { user } = useAuth();
   const isAdmin = user?.role === 'admin';
 
@@ -66,7 +67,7 @@ export function InstrumentDetailModal({ instrumentId, isOpen, onClose, onUpdated
 
   // Edit calibration record
   const [editingRecordId, setEditingRecordId] = useState<string | null>(null);
-  const [recordForm, setRecordForm] = useState({ calibrated_on: '', calibration_due_date: '', notes: '' });
+  const [recordForm, setRecordForm] = useState({ calibrated_on: '', maintenance_on: '', calibration_due_date: '', due_date: '', notes: '' });
   const [recordFile, setRecordFile] = useState<File | null>(null);
   const [savingRecord, setSavingRecord] = useState(false);
   const [recordError, setRecordError] = useState('');
@@ -74,7 +75,7 @@ export function InstrumentDetailModal({ instrumentId, isOpen, onClose, onUpdated
 
   // Add new calibration record
   const [addingRecord, setAddingRecord] = useState(false);
-  const [newRecordForm, setNewRecordForm] = useState({ calibrated_on: '', calibration_due_date: '', notes: '' });
+  const [newRecordForm, setNewRecordForm] = useState({ calibrated_on: '', maintenance_on: '', calibration_due_date: '', due_date: '', notes: '' });
   const [newRecordFile, setNewRecordFile] = useState<File | null>(null);
   const [savingNewRecord, setSavingNewRecord] = useState(false);
   const [newRecordError, setNewRecordError] = useState('');
@@ -114,11 +115,13 @@ export function InstrumentDetailModal({ instrumentId, isOpen, onClose, onUpdated
   }
 
   /* ── Start editing a calibration record ── */
-  function startEditRecord(record: CalibrationRecord) {
+  function startEditRecord(record: CalibrationRecord | AMCRecord) {
     setEditingRecordId(record.id);
     setRecordForm({
-      calibrated_on: record.calibrated_on,
-      calibration_due_date: record.calibration_due_date,
+      calibrated_on: ('calibrated_on' in record) ? record.calibrated_on : '',
+      maintenance_on: ('maintenance_on' in record) ? record.maintenance_on : '',
+      calibration_due_date: ('calibration_due_date' in record) ? record.calibration_due_date : '',
+      due_date: ('due_date' in record) ? record.due_date : '',
       notes: record.notes || '',
     });
     setRecordFile(null);
@@ -132,14 +135,17 @@ export function InstrumentDetailModal({ instrumentId, isOpen, onClose, onUpdated
     setRecordError('');
     try {
       const fd = new FormData();
-      fd.append('calibrated_on', recordForm.calibrated_on);
-      fd.append('calibration_due_date', recordForm.calibration_due_date);
+      if (type === 'calibration') {
+        fd.append('calibrated_on', recordForm.calibrated_on);
+        fd.append('calibration_due_date', recordForm.calibration_due_date);
+        if (recordFile) fd.append('report_file', recordFile);
+      } else {
+        fd.append('maintenance_on', recordForm.maintenance_on);
+        fd.append('due_date', recordForm.due_date);
+      }
       fd.append('notes', recordForm.notes);
-      if (recordFile) fd.append('report_file', recordFile);
 
-      await api.patch(`/instruments/calibrations/${editingRecordId}/`, fd, {
-        headers: { 'Content-Type': 'multipart/form-data' },
-      });
+      await api.patch(`/instruments/${type === 'calibration' ? 'calibrations' : type}/${editingRecordId}/`, fd);
       setEditingRecordId(null);
       fetchInstrument();
       onUpdated?.();
@@ -158,16 +164,19 @@ export function InstrumentDetailModal({ instrumentId, isOpen, onClose, onUpdated
     try {
       const fd = new FormData();
       fd.append('instrument', instrumentId);
-      fd.append('calibrated_on', newRecordForm.calibrated_on);
-      fd.append('calibration_due_date', newRecordForm.calibration_due_date);
+      if (type === 'calibration') {
+        fd.append('calibrated_on', newRecordForm.calibrated_on);
+        fd.append('calibration_due_date', newRecordForm.calibration_due_date);
+        if (newRecordFile) fd.append('report_file', newRecordFile);
+      } else {
+        fd.append('maintenance_on', newRecordForm.maintenance_on);
+        fd.append('due_date', newRecordForm.due_date);
+      }
       fd.append('notes', newRecordForm.notes);
-      if (newRecordFile) fd.append('report_file', newRecordFile);
 
-      await api.post('/instruments/calibrations/', fd, {
-        headers: { 'Content-Type': 'multipart/form-data' },
-      });
+      await api.post(`/instruments/${type === 'calibration' ? 'calibrations' : type}/`, fd);
       setAddingRecord(false);
-      setNewRecordForm({ calibrated_on: '', calibration_due_date: '', notes: '' });
+      setNewRecordForm({ calibrated_on: '', maintenance_on: '', calibration_due_date: '', due_date: '', notes: '' });
       setNewRecordFile(null);
       fetchInstrument();
       onUpdated?.();
@@ -332,7 +341,7 @@ export function InstrumentDetailModal({ instrumentId, isOpen, onClose, onUpdated
             )}
           </div>
 
-          {/* ── Calibration History ── */}
+          {/* ── {type === 'calibration' ? 'Calibration History' : type === 'amc' ? 'AMC History' : 'CAMC History'} ── */}
           <div>
             <div className="flex items-center justify-between mb-3">
               <h3 className="text-sm font-semibold text-gray-900">Calibration Records</h3>
@@ -352,7 +361,7 @@ export function InstrumentDetailModal({ instrumentId, isOpen, onClose, onUpdated
                 <p className="text-xs font-semibold text-green-800 uppercase tracking-wider">New Calibration Record</p>
                 <div className="grid grid-cols-2 gap-3">
                   <div>
-                    <label className={labelCls}>Calibrated On *</label>
+                    <label className={labelCls}>{type === 'calibration' ? 'Calibrated' : 'Maintained'} On *</label>
                     <input
                       type="date"
                       className={inputCls}
@@ -418,9 +427,9 @@ export function InstrumentDetailModal({ instrumentId, isOpen, onClose, onUpdated
             )}
 
             {/* Existing records list */}
-            {instrument.calibration_records && instrument.calibration_records.length > 0 ? (
+            {(type === 'calibration' ? instrument.calibration_records : type === 'amc' ? instrument.amc_records : instrument.camc_records) && (type === 'calibration' ? instrument.calibration_records : type === 'amc' ? instrument.amc_records : instrument.camc_records).length > 0 ? (
               <div className="space-y-3">
-                {instrument.calibration_records.map((record) => {
+                {(type === 'calibration' ? instrument.calibration_records : type === 'amc' ? instrument.amc_records : instrument.camc_records).map((record) => {
                   const styles = getAlertStatusStyles(record.alert_status);
                   const isEditingThis = editingRecordId === record.id;
 
@@ -434,7 +443,7 @@ export function InstrumentDetailModal({ instrumentId, isOpen, onClose, onUpdated
                           <p className="text-xs font-semibold text-blue-700 uppercase tracking-wider">Editing Record</p>
                           <div className="grid grid-cols-2 gap-3">
                             <div>
-                              <label className={labelCls}>Calibrated On</label>
+                              <label className={labelCls}>{type === 'calibration' ? 'Calibrated' : 'Maintained'} On</label>
                               <input
                                 type="date"
                                 className={inputCls}
@@ -478,9 +487,9 @@ export function InstrumentDetailModal({ instrumentId, isOpen, onClose, onUpdated
                               accept=".pdf,.xlsx,.xls,.doc,.docx,.csv,.txt,.jpg,.png"
                               onChange={(e) => setRecordFile(e.target.files?.[0] || null)}
                             />
-                            {record.report_file_url && !recordFile && (
+                            {type === 'calibration' && (record as any).report_file_url && !recordFile && (
                               <a
-                                href={record.report_file_url}
+                                href={(record as any).report_file_url}
                                 target="_blank"
                                 rel="noopener noreferrer"
                                 className="ml-3 text-sm text-blue-600 hover:underline"
@@ -511,26 +520,26 @@ export function InstrumentDetailModal({ instrumentId, isOpen, onClose, onUpdated
                           <div className="space-y-1 flex-1">
                             <div className="flex items-center gap-3">
                               <span className="text-sm font-semibold text-gray-900">
-                                Due: {formatDate(record.calibration_due_date)}
+                                Due: {formatDate(('calibration_due_date' in record) ? (record as CalibrationRecord).calibration_due_date : (record as AMCRecord).due_date)}
                               </span>
                               <Badge className={styles.badge}>{styles.label}</Badge>
                             </div>
                             <div className="text-xs text-gray-500">
-                              Calibrated on: {formatDate(record.calibrated_on)}
+                              {type === 'calibration' ? 'Calibrated' : 'Maintained'} on: {formatDate(('calibrated_on' in record) ? (record as CalibrationRecord).calibrated_on : (record as AMCRecord).maintenance_on)}
                               {record.notes && <span className="ml-3 text-gray-400">· {record.notes}</span>}
                             </div>
                           </div>
                           <div className="flex items-center gap-3 ml-4">
-                            {record.report_file_url ? (
+                            {type === 'calibration' && (record as any).report_file_url ? (
                               <a
-                                href={record.report_file_url}
+                                href={(record as any).report_file_url}
                                 target="_blank"
                                 rel="noopener noreferrer"
                                 className="inline-flex items-center gap-1 text-sm text-blue-600 hover:text-blue-800"
                               >
                                 <FileText className="h-4 w-4" /> Report
                               </a>
-                            ) : (
+                            ) : type !== 'calibration' ? null : (
                               <span className="text-sm text-gray-400">No report</span>
                             )}
                             {isAdmin && (

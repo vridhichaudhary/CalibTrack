@@ -27,7 +27,7 @@ const ALERT_FILTERS: { value: AlertStatus | ''; label: string }[] = [
  * soonest due dates appear first — exactly as required.
  * Rows are color-highlighted based on alert_status.
  */
-export function InstrumentTable() {
+export function InstrumentTable({ type = 'calibration' }: { type?: 'calibration' | 'amc' | 'camc' }) {
   const [searchInput, setSearchInput] = useState('');
   const [search, setSearch] = useState('');
   const [page, setPage] = useState(1);
@@ -118,6 +118,7 @@ export function InstrumentTable() {
         <table className="w-full text-sm">
           <thead className="bg-gray-50 text-gray-600 text-xs uppercase">
             <tr>
+              <th className="px-4 py-3 text-left w-16">S.No.</th>
               <th
                 className="px-4 py-3 text-left cursor-pointer hover:text-gray-900"
                 onClick={() => toggleSort('name')}
@@ -126,8 +127,7 @@ export function InstrumentTable() {
                   Instrument <ArrowUpDown className="h-3 w-3" />
                 </div>
               </th>
-              <th className="px-4 py-3 text-left">Serial Number</th>
-              <th className="px-4 py-3 text-left">Calibrated On</th>
+              <th className="px-4 py-3 text-left">{type === 'calibration' ? 'Calibrated On' : 'Maintenance On'}</th>
               <th
                 className="px-4 py-3 text-left cursor-pointer hover:text-gray-900"
                 onClick={() => toggleSort('next_due_date')}
@@ -137,7 +137,7 @@ export function InstrumentTable() {
                 </div>
               </th>
               <th className="px-4 py-3 text-left">Status</th>
-              <th className="px-4 py-3 text-left">Report</th>
+              {type === 'calibration' && <th className="px-4 py-3 text-left">Report</th>}
               {isAdmin && <th className="px-4 py-3 text-right">Actions</th>}
             </tr>
           </thead>
@@ -152,17 +152,23 @@ export function InstrumentTable() {
 
             {!isLoading && instruments.length === 0 && (
               <tr>
-                <td colSpan={isAdmin ? 7 : 6} className="px-4 py-8 text-center text-gray-400">
+                <td colSpan={isAdmin ? (type === 'calibration' ? 7 : 6) : (type === 'calibration' ? 6 : 5)} className="px-4 py-8 text-center text-gray-400">
                   No instruments found.
                 </td>
               </tr>
             )}
 
             {!isLoading &&
-              instruments.map((instrument) => {
-                const latest = instrument.latest_calibration;
+              instruments.map((instrument, index) => {
+                const latest = 
+                  type === 'calibration' ? instrument.latest_calibration :
+                  type === 'amc' ? instrument.latest_amc :
+                  instrument.latest_camc;
+
                 const status = latest?.alert_status || 'ok';
                 const styles = getAlertStatusStyles(status);
+                
+                const serialNo = (currentPage - 1) * 20 + index + 1;
 
                 return (
                   <tr
@@ -173,36 +179,40 @@ export function InstrumentTable() {
                     )}
                     onClick={() => setSelectedInstrumentId(instrument.id)}
                   >
+                    <td className="px-4 py-3 font-medium text-gray-500">
+                      {serialNo}
+                    </td>
                     <td className="px-4 py-3 font-medium text-gray-900">
                       {instrument.name}
                     </td>
-                    <td className="px-4 py-3 text-gray-800 font-medium">
-                      {instrument.serial_number}
-                    </td>
                     <td className="px-4 py-3 text-gray-600">
-                      {latest ? formatDate(latest.calibrated_on) : '—'}
+                      {latest && 'calibrated_on' in latest ? formatDate((latest as any).calibrated_on) : 
+                       latest && 'maintenance_on' in latest ? formatDate((latest as any).maintenance_on) : '—'}
                     </td>
                     <td className="px-4 py-3 font-medium text-gray-900">
-                      {latest ? formatDate(latest.calibration_due_date) : '—'}
+                      {latest && ('calibration_due_date' in latest) ? formatDate((latest as any).calibration_due_date) : 
+                       latest && ('due_date' in latest) ? formatDate((latest as any).due_date) : '—'}
                     </td>
                     <td className="px-4 py-3">
                       <Badge className={styles.badge}>{styles.label}</Badge>
                     </td>
-                    <td className="px-4 py-3">
-                      {latest?.report_file_url ? (
-                        <a
-                          href={latest.report_file_url}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          onClick={(e) => e.stopPropagation()}
-                          className="inline-flex items-center gap-1 text-blue-600 hover:text-blue-800"
-                        >
-                          <FileText className="h-4 w-4" /> View
-                        </a>
-                      ) : (
-                        <span className="text-gray-400">—</span>
-                      )}
-                    </td>
+                    {type === 'calibration' && (
+                      <td className="px-4 py-3">
+                        {latest && 'report_file_url' in latest && latest.report_file_url ? (
+                          <a
+                            href={latest.report_file_url}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            onClick={(e) => e.stopPropagation()}
+                            className="inline-flex items-center gap-1 text-blue-600 hover:text-blue-800"
+                          >
+                            <FileText className="h-4 w-4" /> View
+                          </a>
+                        ) : (
+                          <span className="text-gray-400">—</span>
+                        )}
+                      </td>
+                    )}
                     {isAdmin && (
                       <td className="px-4 py-3 text-right">
                         <button
@@ -239,6 +249,7 @@ export function InstrumentTable() {
           isOpen={!!selectedInstrumentId}
           onClose={() => setSelectedInstrumentId(null)}
           onUpdated={refetch}
+          type={type}
         />
       )}
     </div>

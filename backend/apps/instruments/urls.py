@@ -40,4 +40,37 @@ urlpatterns = [
         views.CalibrationRecordDetailView.as_view(),
         name='calibration_detail'
     ),
+
+    path(
+        "amc/",
+        views.AMCRecordListCreateView.as_view(),
+        name="amc_list_create"
+    ),
+    path(
+        "amc/<uuid:pk>/",
+        views.AMCRecordDetailView.as_view(),
+        name="amc_detail"
+    ),
+    path(
+        "<uuid:pk>/amc/",
+        views.InstrumentAMCRecordsView.as_view(),
+        name="instrument_amc"
+    ),
+
+    path(
+        "camc/",
+        views.CAMCRecordListCreateView.as_view(),
+        name="camc_list_create"
+    ),
+    path(
+        "camc/<uuid:pk>/",
+        views.CAMCRecordDetailView.as_view(),
+        name="camc_detail"
+    ),
+    path(
+        "<uuid:pk>/camc/",
+        views.InstrumentCAMCRecordsView.as_view(),
+        name="instrument_camc"
+    ),
 ]
+

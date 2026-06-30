@@ -44,6 +44,12 @@ class AlertRecipient(models.Model):
 
 class NotificationLog(models.Model):
 
+    RECORD_TYPE_CHOICES = (
+        ('calibration', 'Calibration'),
+        ('amc', 'AMC'),
+        ('camc', 'CAMC'),
+    )
+    
     TRIGGER_CHOICES = (
         ('90_days', '90 Days Before Due'),
         ('30_days', '30 Days Before Due'),
@@ -60,6 +66,12 @@ class NotificationLog(models.Model):
         default=uuid.uuid4,
         editable=False
     )
+    record_type = models.CharField(
+        max_length=20,
+        choices=RECORD_TYPE_CHOICES,
+        default='calibration',
+        db_index=True
+    )
     instrument = models.ForeignKey(
         'instruments.Instrument',
         on_delete=models.CASCADE,
@@ -67,7 +79,23 @@ class NotificationLog(models.Model):
     )
     calibration_record = models.ForeignKey(
         'instruments.CalibrationRecord',
-        on_delete=models.CASCADE,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='notification_logs'
+    )
+    amc_record = models.ForeignKey(
+        'instruments.AMCRecord',
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='notification_logs'
+    )
+    camc_record = models.ForeignKey(
+        'instruments.CAMCRecord',
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
         related_name='notification_logs'
     )
     trigger_type = models.CharField(

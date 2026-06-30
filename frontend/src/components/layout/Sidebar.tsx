@@ -2,18 +2,22 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { Wrench, Users, FileClock, LayoutDashboard, LogOut } from 'lucide-react';
+import { Wrench, Users, FileClock, LayoutDashboard, LogOut, ClipboardCheck, Settings2 } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
 import { classNames } from '@/lib/utils';
 
 const ADMIN_LINKS = [
-  { href: '/admin/instruments', label: 'Instruments', icon: Wrench },
+  { href: '/admin/instruments', label: 'Calibration', icon: Wrench },
+  { href: '/admin/amc', label: 'AMC', icon: ClipboardCheck },
+  { href: '/admin/camc', label: 'CAMC', icon: Settings2 },
   { href: '/admin/recipients', label: 'Alert Recipients', icon: Users },
   { href: '/admin/logs', label: 'Notification Logs', icon: FileClock },
 ];
 
 const USER_LINKS = [
-  { href: '/dashboard', label: 'Dashboard', icon: LayoutDashboard },
+  { href: '/dashboard', label: 'Calibration', icon: Wrench },
+  { href: '/dashboard/amc', label: 'AMC', icon: ClipboardCheck },
+  { href: '/dashboard/camc', label: 'CAMC', icon: Settings2 },
 ];
 
 export function Sidebar() {

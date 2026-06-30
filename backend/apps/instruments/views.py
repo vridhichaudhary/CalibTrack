@@ -6,11 +6,11 @@ from rest_framework.parsers import MultiPartParser, FormParser, JSONParser
 from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework.filters import SearchFilter, OrderingFilter
 from django.db.models import Prefetch
-from .models import Instrument, CalibrationRecord
+from .models import Instrument, CalibrationRecord, AMCRecord, CAMCRecord
 from .serializers import (
     InstrumentListSerializer,
     InstrumentDetailSerializer,
-    CalibrationRecordSerializer,
+    CalibrationRecordSerializer, AMCRecordSerializer, CAMCRecordSerializer,
 )
 from .filters import InstrumentFilter, CalibrationRecordFilter
 from apps.users.permissions import IsAdminRole, IsAdminOrReadOnly
@@ -53,10 +53,16 @@ class InstrumentListCreateView(generics.ListCreateAPIView):
         ).prefetch_related(
             Prefetch(
                 'calibration_records',
-                queryset=CalibrationRecord.objects.order_by(
-                    '-calibration_due_date'
-                )
-            )
+                queryset=CalibrationRecord.objects.order_by('-calibration_due_date')
+            ),
+            Prefetch(
+                'amc_records',
+                queryset=AMCRecord.objects.order_by('-due_date')
+            ),
+            Prefetch(
+                'camc_records',
+                queryset=CAMCRecord.objects.order_by('-due_date')
+            ),
         ).annotate(
             next_due_date=Min('calibration_records__calibration_due_date')
         )
@@ -133,7 +139,15 @@ class InstrumentDetailView(generics.RetrieveUpdateDestroyAPIView):
                 queryset=CalibrationRecord.objects.order_by(
                     '-calibration_due_date'
                 ).select_related('created_by')
-            )
+            ),
+            Prefetch(
+                'amc_records',
+                queryset=AMCRecord.objects.order_by('-due_date').select_related('created_by')
+            ),
+            Prefetch(
+                'camc_records',
+                queryset=CAMCRecord.objects.order_by('-due_date').select_related('created_by')
+            ),
         )
 
     def retrieve(self, request, *args, **kwargs):
@@ -380,3 +394,63 @@ class InstrumentCalibrationHistoryView(generics.ListAPIView):
             'count': queryset.count(),
             'data': serializer.data
         })
+
+
+class AMCRecordListCreateView(generics.ListCreateAPIView):
+    permission_classes = [IsAdminOrReadOnly]
+    serializer_class = AMCRecordSerializer
+    pagination_class = None
+
+    def get_queryset(self):
+        return AMCRecord.objects.all().order_by("-due_date")
+
+class AMCRecordDetailView(generics.RetrieveUpdateDestroyAPIView):
+    permission_classes = [IsAdminOrReadOnly]
+    serializer_class = AMCRecordSerializer
+    queryset = AMCRecord.objects.all()
+
+class InstrumentAMCRecordsView(generics.ListAPIView):
+    permission_classes = [IsAdminOrReadOnly]
+    serializer_class = AMCRecordSerializer
+    pagination_class = None
+
+    def get_queryset(self):
+        return AMCRecord.objects.filter(
+            instrument__id=self.kwargs["pk"],
+            instrument__is_deleted=False
+        ).select_related("instrument", "created_by").order_by("-due_date")
+
+    def list(self, request, *args, **kwargs):
+        queryset = self.get_queryset()
+        serializer = self.get_serializer(queryset, many=True, context={"request": request})
+        return Response({"success": True, "count": queryset.count(), "data": serializer.data})
+
+
+class CAMCRecordListCreateView(generics.ListCreateAPIView):
+    permission_classes = [IsAdminOrReadOnly]
+    serializer_class = CAMCRecordSerializer
+    pagination_class = None
+
+    def get_queryset(self):
+        return CAMCRecord.objects.all().order_by("-due_date")
+
+class CAMCRecordDetailView(generics.RetrieveUpdateDestroyAPIView):
+    permission_classes = [IsAdminOrReadOnly]
+    serializer_class = CAMCRecordSerializer
+    queryset = CAMCRecord.objects.all()
+
+class InstrumentCAMCRecordsView(generics.ListAPIView):
+    permission_classes = [IsAdminOrReadOnly]
+    serializer_class = CAMCRecordSerializer
+    pagination_class = None
+
+    def get_queryset(self):
+        return CAMCRecord.objects.filter(
+            instrument__id=self.kwargs["pk"],
+            instrument__is_deleted=False
+        ).select_related("instrument", "created_by").order_by("-due_date")
+
+    def list(self, request, *args, **kwargs):
+        queryset = self.get_queryset()
+        serializer = self.get_serializer(queryset, many=True, context={"request": request})
+        return Response({"success": True, "count": queryset.count(), "data": serializer.data})

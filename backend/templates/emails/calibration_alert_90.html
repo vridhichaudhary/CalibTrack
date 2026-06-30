@@ -6,20 +6,20 @@
 <body style="font-family: Arial, sans-serif; background-color: #f4f4f4; padding: 20px;">
   <div style="max-width: 600px; margin: 0 auto; background: #ffffff; border-radius: 8px; overflow: hidden; border: 1px solid #e0e0e0;">
     <div style="background-color: #2563eb; padding: 20px;">
-      <h2 style="color: #ffffff; margin: 0;">CalibTrack — Calibration Notice</h2>
+      <h2 style="color: #ffffff; margin: 0;">CalibTrack — {{ type_label }} Notice</h2>
     </div>
     <div style="padding: 24px;">
       <p>Dear {{ recipient_name }},</p>
-      <p>This is an advance notice that the following instrument's calibration is due in <strong>{{ remaining_days }} days</strong>.</p>
+      <p>This is an advance notice that the following instrument's {{ type_label|lower }} is due in <strong>{{ remaining_days }} days</strong>.</p>
       <table style="width: 100%; border-collapse: collapse; margin: 16px 0;">
         <tr><td style="padding: 8px; border-bottom: 1px solid #eee;"><strong>Instrument</strong></td><td style="padding: 8px; border-bottom: 1px solid #eee;">{{ instrument_name }}</td></tr>
         <tr><td style="padding: 8px; border-bottom: 1px solid #eee;"><strong>Serial Number</strong></td><td style="padding: 8px; border-bottom: 1px solid #eee;">{{ serial_number }}</td></tr>
         <tr><td style="padding: 8px; border-bottom: 1px solid #eee;"><strong>Location</strong></td><td style="padding: 8px; border-bottom: 1px solid #eee;">{{ location }}</td></tr>
         <tr><td style="padding: 8px; border-bottom: 1px solid #eee;"><strong>Department</strong></td><td style="padding: 8px; border-bottom: 1px solid #eee;">{{ department }}</td></tr>
         <tr><td style="padding: 8px; border-bottom: 1px solid #eee;"><strong>Last Calibrated</strong></td><td style="padding: 8px; border-bottom: 1px solid #eee;">{{ calibrated_on }}</td></tr>
-        <tr><td style="padding: 8px;"><strong>Due Date</strong></td><td style="padding: 8px; color: #d97706; font-weight: bold;">{{ calibration_due_date }}</td></tr>
+        <tr><td style="padding: 8px;"><strong>Due Date</strong></td><td style="padding: 8px; color: #d97706; font-weight: bold;">{{ {{ type_label|lower }}_due_date }}</td></tr>
       </table>
-      <p>Please plan to schedule the recalibration well ahead of the due date.</p>
+      <p>Please plan to schedule the re{{ type_label|lower }} well ahead of the due date.</p>
       <p style="color: #888; font-size: 12px; margin-top: 24px;">This is an automated message from CalibTrack. Please do not reply to this email.</p>
     </div>
   </div>
