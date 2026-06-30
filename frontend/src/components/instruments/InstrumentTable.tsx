@@ -1,8 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { useRouter } from 'next/navigation';
-import { Search, ArrowUpDown, FileText, MapPin } from 'lucide-react';
+import { Search, ArrowUpDown, FileText } from 'lucide-react';
 import { useInstruments } from '@/hooks/useInstruments';
 import { Badge } from '@/components/ui/Badge';
 import { Pagination } from '@/components/ui/Pagination';
@@ -29,7 +28,6 @@ const ALERT_FILTERS: { value: AlertStatus | ''; label: string }[] = [
  * Rows are color-highlighted based on alert_status.
  */
 export function InstrumentTable() {
-  const router = useRouter();
   const [searchInput, setSearchInput] = useState('');
   const [search, setSearch] = useState('');
   const [page, setPage] = useState(1);
@@ -240,6 +238,7 @@ export function InstrumentTable() {
           instrumentId={selectedInstrumentId}
           isOpen={!!selectedInstrumentId}
           onClose={() => setSelectedInstrumentId(null)}
+          onUpdated={refetch}
         />
       )}
     </div>
