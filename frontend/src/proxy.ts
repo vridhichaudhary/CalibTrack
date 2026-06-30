@@ -1,29 +1,44 @@
 import { NextRequest, NextResponse } from 'next/server';
 
 /**
- * Lightweight middleware. Since tokens live in localStorage 
- * (not accessible here), this only handles the most basic 
- * redirect cases using a non-httpOnly cookie mirror of the 
- * user's role, which we set client-side after login for this 
- * exact purpose (see AuthContext — to be extended in Phase 9 
- * to also set this cookie).
- * 
- * Full enforcement happens in the (dashboard) layout component
- * client-side, which is the actual source of truth.
+ * Next.js 16 Proxy (equivalent of middleware for this version).
+ * Runs on the Edge before any page renders.
+ *
+ * Since tokens live in localStorage (inaccessible here), we rely
+ * on the `user_role` cookie set in AuthContext immediately after
+ * login. This gives instant server-side redirects with no flicker:
+ *
+ *  - Unauthenticated → /admin/* or /dashboard/* : redirect to /login
+ *  - Authenticated admin → / or /login          : redirect to /admin/instruments
+ *  - Authenticated user → / or /login           : redirect to /dashboard
+ *  - Authenticated non-admin → /admin/*         : redirect to /dashboard
  */
 export function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl;
   const roleCookie = request.cookies.get('user_role')?.value;
 
-  const isAdminRoute = pathname.startsWith('/admin');
-  const isLoginRoute = pathname === '/login';
+  const isAuthenticated = !!roleCookie;
+  const isAdmin = roleCookie === 'admin';
 
-  if (isLoginRoute && roleCookie) {
-    const redirectPath = roleCookie === 'admin' ? '/admin/instruments' : '/dashboard';
-    return NextResponse.redirect(new URL(redirectPath, request.url));
+  const isLoginRoute = pathname === '/login';
+  const isRootRoute = pathname === '/';
+  const isAdminRoute = pathname.startsWith('/admin');
+  const isDashboardRoute = pathname.startsWith('/dashboard');
+
+  // Already logged in → skip login / root page directly to dashboard
+  if (isAuthenticated && (isLoginRoute || isRootRoute)) {
+    const dest = isAdmin ? '/admin/instruments' : '/dashboard';
+    return NextResponse.redirect(new URL(dest, request.url));
   }
 
-  if (isAdminRoute && roleCookie && roleCookie !== 'admin') {
+  // Not logged in → redirect protected routes to login
+  if (!isAuthenticated && (isAdminRoute || isDashboardRoute)) {
+    const loginUrl = new URL('/login', request.url);
+    return NextResponse.redirect(loginUrl);
+  }
+
+  // Non-admin trying to access /admin/* → kick to /dashboard
+  if (isAuthenticated && !isAdmin && isAdminRoute) {
     return NextResponse.redirect(new URL('/dashboard', request.url));
   }
 
@@ -31,5 +46,10 @@ export function proxy(request: NextRequest) {
 }
 
 export const config = {
-  matcher: ['/admin/:path*', '/dashboard/:path*', '/login'],
+  matcher: [
+    '/',
+    '/login',
+    '/admin/:path*',
+    '/dashboard/:path*',
+  ],
 };
