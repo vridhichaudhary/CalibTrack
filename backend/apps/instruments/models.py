@@ -18,8 +18,8 @@ validate_pdf_file = validate_report_file
 
 def _next_serial_number():
     """Auto-generate the next sequential serial number like INST-0001."""
-    last = Instrument.objects.order_by('-created_at').values_list('serial_number', flat=True).first()
-    if last and last.startswith('INST-'):
+    last = Instrument.objects.filter(serial_number__startswith='INST-').order_by('-serial_number').values_list('serial_number', flat=True).first()
+    if last:
         try:
             num = int(last.split('-')[1]) + 1
             return f'INST-{num:04d}'
