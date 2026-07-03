@@ -40,4 +40,10 @@ urlpatterns = [
         views.TriggerNotificationCheckView.as_view(),
         name='trigger_notification_check'
     ),
+
+    path(
+        'cron-trigger/',
+        views.ExternalCronTriggerView.as_view(),
+        name='external_cron_trigger'
+    ),
 ]

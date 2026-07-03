@@ -22,6 +22,7 @@ INSTALLED_APPS = [
     'django_filters',
     'django_celery_beat',
     'django_celery_results',
+    'anymail',
 
     # Local apps
     'apps.users',
@@ -157,13 +158,39 @@ CELERY_TASK_ALWAYS_EAGER = False
 CELERY_TASK_ACKS_LATE = True
 CELERY_WORKER_PREFETCH_MULTIPLIER = 1
 
-EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
-EMAIL_HOST = config('EMAIL_HOST', default='smtp.gmail.com')
-EMAIL_PORT = config('EMAIL_PORT', default=587, cast=int)
-EMAIL_USE_TLS = True
-EMAIL_HOST_USER = config('EMAIL_HOST_USER')
-EMAIL_HOST_PASSWORD = config('EMAIL_HOST_PASSWORD')
-DEFAULT_FROM_EMAIL = config('DEFAULT_FROM_EMAIL')
+# ─── Email Configuration ───────────────────────────────────────────
+# Uses Resend HTTP API (via django-anymail) instead of SMTP.
+# Railway blocks outbound SMTP ports (25, 465, 587) so SMTP will
+# always fail with errno 101. Resend uses port 443 (standard HTTPS)
+# which is never blocked.
+#
+# When RESEND_API_KEY is present in environment: uses Resend API.
+# When RESEND_API_KEY is absent (local dev): falls back to console
+# backend which prints emails to terminal instead of sending them.
+# This means local development works with zero email configuration.
+
+RESEND_API_KEY = config('RESEND_API_KEY', default='')
+
+if RESEND_API_KEY:
+    EMAIL_BACKEND = 'anymail.backends.resend.EmailBackend'
+    ANYMAIL = {
+        'RESEND_API_KEY': RESEND_API_KEY,
+    }
+else:
+    EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
+
+DEFAULT_FROM_EMAIL = config(
+    'DEFAULT_FROM_EMAIL',
+    default='CalibTrack Alerts <onboarding@resend.dev>'
+)
+
+# ─── Cron Secret Key ───────────────────────────────────────────────
+# Secret key that protects the /cron-trigger/ endpoint.
+# The external cron service (cron-job.org) must send this key in
+# the X-Cron-Secret header with every request. Without this, any
+# person who discovers the URL could trigger the notification system
+# at will. This key is set in Railway environment variables.
+CRON_SECRET_KEY = config('CRON_SECRET_KEY', default='')
 
 LOGGING = {
     'version': 1,

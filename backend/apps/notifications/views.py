@@ -4,6 +4,7 @@ from rest_framework import generics, status
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework.filters import OrderingFilter, SearchFilter
+from django.conf import settings
 from django_filters.rest_framework import DjangoFilterBackend
 import django_filters
 from .models import AlertRecipient, NotificationLog
@@ -303,3 +304,97 @@ class TriggerNotificationCheckView(APIView):
                 'success': False,
                 'error': f'Failed to trigger notification check: {str(e)}'
             }, status=500)
+
+
+class ExternalCronTriggerView(APIView):
+    """
+    POST /api/v1/notifications/cron-trigger/
+    
+    This is the GUARANTEED daily trigger for the entire
+    notification system. It is called by cron-job.org every
+    day at 8 AM IST via an HTTP POST request.
+    
+    WHY THIS APPROACH:
+    Railway's free tier puts Celery Beat and Celery Worker
+    containers to sleep when inactive. A sleeping Celery Beat
+    never fires its schedule, which means the daily notification
+    check silently never runs. This is catastrophic for a system
+    where missing an alert could cause compliance failures in
+    an industrial environment.
+    
+    By using an EXTERNAL cron service (cron-job.org) to hit this
+    HTTP endpoint, we bypass Railway's container sleep entirely.
+    Railway's WEB service wakes up instantly on any incoming
+    HTTP request even on free tier. So we get guaranteed daily
+    execution at zero cost.
+    
+    SECURITY:
+    Protected by CRON_SECRET_KEY in settings. The cron service
+    must send this key in the X-Cron-Secret header. Any request
+    without the correct key is rejected with 401.
+    
+    IDEMPOTENT:
+    Calling this endpoint multiple times on the same day is safe.
+    The NotificationLog deduplication logic inside
+    check_calibration_due_dates ensures each alert is sent
+    exactly once per recipient per trigger type per year.
+    So if both Celery Beat AND the external cron both fire on
+    the same day, recipients still only get one email each.
+    
+    RUNS SYNCHRONOUSLY:
+    Unlike the TriggerNotificationCheckView which uses .delay()
+    to queue the task, this view calls check_calibration_due_dates()
+    DIRECTLY without .delay(). This means it runs immediately in
+    the web process and the HTTP response contains the actual result
+    of the run. cron-job.org can then log this result and alert
+    us if something went wrong.
+    """
+    permission_classes = []
+    authentication_classes = []
+
+    def post(self, request):
+        provided_key = request.headers.get('X-Cron-Secret', '')
+        expected_key = getattr(settings, 'CRON_SECRET_KEY', '')
+
+        if not expected_key:
+            logger.error(
+                "CRON_SECRET_KEY is not set in environment variables. "
+                "The cron trigger endpoint is disabled for security."
+            )
+            return Response({
+                'success': False,
+                'error': 'Cron trigger is not configured on this server.'
+            }, status=status.HTTP_503_SERVICE_UNAVAILABLE)
+
+        if provided_key != expected_key:
+            logger.warning(
+                f"Unauthorized cron trigger attempt. "
+                f"IP: {request.META.get('REMOTE_ADDR')}"
+            )
+            return Response({
+                'success': False,
+                'error': 'Unauthorized.'
+            }, status=status.HTTP_401_UNAUTHORIZED)
+
+        logger.info("External cron trigger received. Starting notification check.")
+
+        try:
+            from apps.notifications.tasks import check_calibration_due_dates
+            result = check_calibration_due_dates()
+
+            logger.info(f"Cron trigger completed successfully. Result: {result}")
+
+            return Response({
+                'success': True,
+                'message': result
+            }, status=status.HTTP_200_OK)
+
+        except Exception as e:
+            logger.error(
+                f"Cron trigger failed with exception: {str(e)}",
+                exc_info=True
+            )
+            return Response({
+                'success': False,
+                'error': f'Notification check failed: {str(e)}'
+            }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)

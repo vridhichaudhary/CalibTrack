@@ -127,26 +127,56 @@ def check_calibration_due_dates(self):
 
 
 def send_single_alert_email(record, recipient, trigger_type, template_name, remaining_days, record_type, type_label, due_date):
-    if trigger_type == '90_days':
-        subject = f"Upcoming {type_label}: {record.instrument.name} due in {remaining_days} days"
-    elif trigger_type == '30_days':
-        subject = f"Warning: {type_label} due in {remaining_days} days for {record.instrument.name}"
-    else:
-        subject = f"CRITICAL: {type_label} due in {remaining_days} days for {record.instrument.name}"
+    """
+    Sends one calibration alert email for one specific instrument
+    to one specific recipient.
+    
+    Each email contains full instrument details:
+    - Instrument name and serial number (so recipient knows exactly
+      which instrument needs calibration)
+    - Physical location and department (so the right team can act)
+    - Calibrated on date (when it was last done)
+    - Calibration due date (the deadline)
+    - Exact number of days remaining (the urgency)
+    - Recipient's name (personalized greeting)
+    
+    Uses Resend HTTP API via django-anymail. If Resend is not
+    configured, falls back to console backend for local development.
+    Raises an exception on failure so the caller can log it to
+    NotificationLog with status=FAILED and the exact error message.
+    """
+    instrument = record.instrument
+
+    calibrated_on = getattr(record, 'calibrated_on', getattr(record, 'maintenance_on', None))
 
     context = {
-        'recipient_name': recipient.name,
-        'instrument_name': record.instrument.name,
-        'serial_number': record.instrument.serial_number,
-        'department': record.instrument.department,
-        'due_date': due_date,
+        'instrument_name': instrument.name,
+        'serial_number': instrument.serial_number,
+        'location': instrument.location,
+        'department': instrument.department,
+        'calibrated_on': calibrated_on,
+        'calibration_due_date': due_date,
         'remaining_days': remaining_days,
-        'dashboard_url': settings.FRONTEND_URL,
-        'type_label': type_label,
+        'recipient_name': recipient.name,
+        'trigger_label': {
+            '90_days': '90 Days Notice',
+            '30_days': '30 Days Notice',
+            '20_days': 'Urgent — 20 Days Notice',
+        }.get(trigger_type, 'Notice'),
     }
 
     html_message = render_to_string(template_name, context)
     plain_message = strip_tags(html_message)
+
+    if remaining_days < 0:
+        urgency = f"OVERDUE by {abs(remaining_days)} days"
+    else:
+        urgency = f"due in {remaining_days} days"
+
+    subject = (
+        f"[CalibTrack Alert] {instrument.name} "
+        f"({instrument.serial_number}) — {type_label} {urgency}"
+    )
 
     send_mail(
         subject=subject,
