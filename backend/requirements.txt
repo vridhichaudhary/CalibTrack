@@ -16,4 +16,4 @@ gunicorn==21.2.0
 whitenoise==6.6.0
 python-decouple==3.8
 django-cloudinary-storage==0.3.0
-django-anymail[resend]==10.3
+django-anymail[sendinblue]==10.3

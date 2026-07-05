@@ -158,33 +158,32 @@ CELERY_TASK_ALWAYS_EAGER = False
 CELERY_TASK_ACKS_LATE = True
 CELERY_WORKER_PREFETCH_MULTIPLIER = 1
 
-# ─── Email Configuration ───────────────────────────────────────────
-# Uses Resend HTTP API (via django-anymail) instead of SMTP.
-# Railway blocks outbound SMTP ports (25, 465, 587) so SMTP will
-# always fail with errno 101. Resend uses port 443 (standard HTTPS)
-# which is never blocked.
+# ─── Email Configuration (Brevo HTTP API) ──────────────────────────
+# Uses Brevo (formerly Sendinblue) HTTP API via django-anymail.
+# Brevo sends over HTTPS port 443, which Railway never blocks.
+# Unlike Resend, Brevo allows sending FROM a verified Gmail address
+# to ANY recipient email — no custom domain required.
+# Free tier: 300 emails/day, forever, no credit card needed.
 #
-# When RESEND_API_KEY is present in environment: uses Resend API.
-# When RESEND_API_KEY is absent (local dev): falls back to console
-# backend which prints emails to terminal instead of sending them.
-# This means local development works with zero email configuration.
+# When BREVO_API_KEY is set: uses Brevo HTTP API (production)
+# When BREVO_API_KEY is not set: prints to console (local dev)
 
-RESEND_API_KEY = config('RESEND_API_KEY', default='')
+BREVO_API_KEY = config('BREVO_API_KEY', default='')
 
-if RESEND_API_KEY:
-    EMAIL_BACKEND = 'anymail.backends.resend.EmailBackend'
+if BREVO_API_KEY:
+    EMAIL_BACKEND = 'anymail.backends.sendinblue.EmailBackend'
     ANYMAIL = {
-        'RESEND_API_KEY': RESEND_API_KEY,
+        'SENDINBLUE_API_KEY': BREVO_API_KEY,
     }
 else:
     EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
 
 DEFAULT_FROM_EMAIL = config(
     'DEFAULT_FROM_EMAIL',
-    default='CalibTrack Alerts <onboarding@resend.dev>'
+    default='CalibTrack Alerts <calibtrack.alerts@gmail.com>'
 )
 
-# ─── Cron Secret Key ───────────────────────────────────────────────
+# ─── Cron Secret Key ────────────────────────────────────────────────
 # Secret key that protects the /cron-trigger/ endpoint.
 # The external cron service (cron-job.org) must send this key in
 # the X-Cron-Secret header with every request. Without this, any
