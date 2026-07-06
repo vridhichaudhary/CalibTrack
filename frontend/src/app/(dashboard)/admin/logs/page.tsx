@@ -45,11 +45,14 @@ export default function NotificationLogsPage() {
     setIsTriggering(true);
     setMessage('');
     try {
-      await api.post('/notifications/trigger-check/');
-      setMessage('Notification check triggered. Refreshing in a few seconds...');
-      setTimeout(fetchData, 4000);
-    } catch (err) {
-      setMessage('Failed to trigger notification check.');
+      const res = await api.post('/notifications/trigger-check/');
+      const result = res.data.message || 'Check complete.';
+      setMessage(`✅ ${result}`);
+      // Refresh immediately — results are synchronous now
+      await fetchData();
+    } catch (err: any) {
+      const errMsg = err?.response?.data?.error || 'Failed to trigger notification check.';
+      setMessage(`❌ ${errMsg}`);
     } finally {
       setIsTriggering(false);
     }

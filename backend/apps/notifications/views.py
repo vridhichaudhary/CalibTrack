@@ -278,31 +278,33 @@ class TriggerNotificationCheckView(APIView):
     """
     POST /api/v1/notifications/trigger-check/
     Admin only. Manually triggers the daily calibration due-date
-    check instead of waiting for the 8 AM scheduled run. Useful
-    for testing or if admin wants to force an immediate check
-    after adding new calibration records or recipients.
+    check SYNCHRONOUSLY — runs directly in the web process, not
+    via Celery queue. This ensures it works even on Railway free
+    tier where the Celery worker may be sleeping.
+    Returns the actual result immediately so the admin sees exactly
+    what happened (Sent: X, Skipped: X, Failed: X).
     """
 
     permission_classes = [IsAdminRole]
 
     def post(self, request):
         try:
-            result = check_calibration_due_dates.delay()
             logger.info(
-                f"Manual notification check triggered by {request.user.username}, "
-                f"task id: {result.id}"
+                f"Manual notification check triggered by {request.user.username}"
             )
+            # Call directly (not .delay()) so it runs synchronously in the
+            # web process and returns the real result right now.
+            result = check_calibration_due_dates()
+            logger.info(f"Manual notification check completed. Result: {result}")
             return Response({
                 'success': True,
-                'message': 'Notification check has been triggered. '
-                            'Results will appear in the notification logs shortly.',
-                'task_id': str(result.id)
+                'message': result,
             })
         except Exception as e:
-            logger.error(f"Failed to trigger notification check: {e}")
+            logger.error(f"Failed to run notification check: {e}", exc_info=True)
             return Response({
                 'success': False,
-                'error': f'Failed to trigger notification check: {str(e)}'
+                'error': f'Notification check failed: {str(e)}'
             }, status=500)
 
 
