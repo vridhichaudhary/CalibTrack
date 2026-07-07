@@ -104,11 +104,11 @@ export default function LoginPage() {
         <div className="relative z-10 flex flex-col items-center px-12 text-center text-white">
           {/* Logo container */}
           <div
-            className="flex items-center justify-center w-40 h-40 rounded-2xl mb-8 shadow-2xl"
+            className="flex items-center justify-center w-40 h-40 rounded-2xl mb-6 shadow-2xl"
             style={{ backgroundColor: 'white', padding: '12px' }}
           >
             <img
-              src="/iocl-logo.png"
+              src="/indianoil.png"
               alt="IndianOil"
               className="w-full h-full object-contain"
               onError={(e) => {
@@ -118,6 +118,16 @@ export default function LoginPage() {
                   '<div style="width:100%;height:100%;border-radius:50%;background:#F37021;display:flex;align-items:center;justify-content:center;color:white;font-weight:700;font-size:13px;text-align:center;line-height:1.4">इंडियन<br/>ऑयल</div>';
               }}
             />
+          </div>
+
+          {/* PRPC heading */}
+          <div className="mb-2">
+            <h2
+              className="text-2xl font-bold tracking-[0.18em] uppercase"
+              style={{ color: '#F37021' }}
+            >
+              PRPC
+            </h2>
           </div>
 
           <div
@@ -160,11 +170,11 @@ export default function LoginPage() {
           {/* Mobile logo */}
           <div className="lg:hidden flex flex-col items-center mb-8">
             <div
-              className="w-16 h-16 rounded-xl flex items-center justify-center mb-4 shadow-lg"
+              className="w-16 h-16 rounded-xl flex items-center justify-center mb-3 shadow-lg"
               style={{ backgroundColor: '#2C3482', padding: '8px' }}
             >
               <img
-                src="/iocl-logo.png"
+                src="/indianoil.png"
                 alt="IndianOil"
                 className="w-full h-full object-contain"
                 onError={(e) => {
@@ -172,7 +182,13 @@ export default function LoginPage() {
                 }}
               />
             </div>
-            <h1 className="text-xl font-bold text-center" style={{ color: '#2C3482' }}>
+            <h2
+              className="text-lg font-bold tracking-widest uppercase"
+              style={{ color: '#F37021' }}
+            >
+              PRPC
+            </h2>
+            <h1 className="text-base font-semibold text-center mt-1" style={{ color: '#2C3482' }}>
               Industrial Integrity System
             </h1>
           </div>
