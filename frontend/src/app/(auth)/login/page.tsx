@@ -136,7 +136,7 @@ export default function LoginPage() {
           />
 
           <h1 className="text-4xl font-bold tracking-tight mb-4 leading-tight">
-            Industrial<br />Integrity System
+            Quality Control<br />Management System
           </h1>
           <p
             className="text-lg max-w-sm leading-relaxed"
