@@ -365,8 +365,8 @@ export function InstrumentDetailModal({ instrumentId, isOpen, onClose, onUpdated
                     <input
                       type="date"
                       className={inputCls}
-                      value={newRecordForm.calibrated_on}
-                      onChange={(e) => setNewRecordForm((p) => ({ ...p, calibrated_on: e.target.value }))}
+                      value={type === 'calibration' ? newRecordForm.calibrated_on : newRecordForm.maintenance_on}
+                      onChange={(e) => setNewRecordForm((p) => type === 'calibration' ? { ...p, calibrated_on: e.target.value } : { ...p, maintenance_on: e.target.value })}
                     />
                   </div>
                   <div>
@@ -374,8 +374,8 @@ export function InstrumentDetailModal({ instrumentId, isOpen, onClose, onUpdated
                     <input
                       type="date"
                       className={inputCls}
-                      value={newRecordForm.calibration_due_date}
-                      onChange={(e) => setNewRecordForm((p) => ({ ...p, calibration_due_date: e.target.value }))}
+                      value={type === 'calibration' ? newRecordForm.calibration_due_date : newRecordForm.due_date}
+                      onChange={(e) => setNewRecordForm((p) => type === 'calibration' ? { ...p, calibration_due_date: e.target.value } : { ...p, due_date: e.target.value })}
                     />
                   </div>
                 </div>
@@ -411,7 +411,10 @@ export function InstrumentDetailModal({ instrumentId, isOpen, onClose, onUpdated
                 <div className="flex gap-2">
                   <button
                     onClick={addRecord}
-                    disabled={savingNewRecord || !newRecordForm.calibrated_on || !newRecordForm.calibration_due_date}
+                    disabled={
+                      savingNewRecord ||
+                      (type === 'calibration' ? (!newRecordForm.calibrated_on || !newRecordForm.calibration_due_date) : (!newRecordForm.maintenance_on || !newRecordForm.due_date))
+                    }
                     className="inline-flex items-center gap-1.5 bg-green-600 text-white text-sm px-4 py-2 rounded-lg hover:bg-green-700 disabled:opacity-50 transition"
                   >
                     <Check className="h-4 w-4" /> {savingNewRecord ? 'Saving…' : 'Save Record'}
@@ -447,8 +450,8 @@ export function InstrumentDetailModal({ instrumentId, isOpen, onClose, onUpdated
                               <input
                                 type="date"
                                 className={inputCls}
-                                value={recordForm.calibrated_on}
-                                onChange={(e) => setRecordForm((p) => ({ ...p, calibrated_on: e.target.value }))}
+                                value={type === 'calibration' ? recordForm.calibrated_on : recordForm.maintenance_on}
+                                onChange={(e) => setRecordForm((p) => type === 'calibration' ? { ...p, calibrated_on: e.target.value } : { ...p, maintenance_on: e.target.value })}
                               />
                             </div>
                             <div>
@@ -456,8 +459,8 @@ export function InstrumentDetailModal({ instrumentId, isOpen, onClose, onUpdated
                               <input
                                 type="date"
                                 className={inputCls}
-                                value={recordForm.calibration_due_date}
-                                onChange={(e) => setRecordForm((p) => ({ ...p, calibration_due_date: e.target.value }))}
+                                value={type === 'calibration' ? recordForm.calibration_due_date : recordForm.due_date}
+                                onChange={(e) => setRecordForm((p) => type === 'calibration' ? { ...p, calibration_due_date: e.target.value } : { ...p, due_date: e.target.value })}
                               />
                             </div>
                           </div>
