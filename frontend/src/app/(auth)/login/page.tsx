@@ -104,8 +104,8 @@ export default function LoginPage() {
         <div className="relative z-10 flex flex-col items-center px-12 text-center text-white">
           {/* Logo container */}
           <div
-            className="flex items-center justify-center w-40 h-40 rounded-2xl mb-6 shadow-2xl"
-            style={{ backgroundColor: 'white', padding: '12px' }}
+            className="flex items-center justify-center w-52 h-52 rounded-2xl mb-6 shadow-2xl"
+            style={{ backgroundColor: 'white', padding: '6px' }}
           >
             <img
               src="/indianoil.png"
