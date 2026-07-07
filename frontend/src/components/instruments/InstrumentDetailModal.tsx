@@ -272,7 +272,7 @@ export function InstrumentDetailModal({ instrumentId, isOpen, onClose, onUpdated
                     </div>
                   )}
                 </div>
-                <div className="grid grid-cols-2 gap-3">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                   <div>
                     <label className={labelCls}>Department</label>
                     <select
@@ -314,7 +314,7 @@ export function InstrumentDetailModal({ instrumentId, isOpen, onClose, onUpdated
                 </div>
               </div>
             ) : (
-              <div className="grid grid-cols-2 gap-x-8 gap-y-4 sm:grid-cols-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-x-8 gap-y-4">
                 {[
                   { label: 'Name', value: instrument.name },
                   { label: 'Serial Number', value: instrument.serial_number },
@@ -359,7 +359,7 @@ export function InstrumentDetailModal({ instrumentId, isOpen, onClose, onUpdated
             {addingRecord && (
               <div className="mb-4 p-4 rounded-xl border-2 border-green-200 bg-green-50 space-y-3">
                 <p className="text-xs font-semibold text-green-800 uppercase tracking-wider">New Calibration Record</p>
-                <div className="grid grid-cols-2 gap-3">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                   <div>
                     <label className={labelCls}>{type === 'calibration' ? 'Calibrated' : 'Maintained'} On *</label>
                     <input
@@ -444,7 +444,7 @@ export function InstrumentDetailModal({ instrumentId, isOpen, onClose, onUpdated
                       {isEditingThis ? (
                         <div className="p-4 space-y-3">
                           <p className="text-xs font-semibold text-blue-700 uppercase tracking-wider">Editing Record</p>
-                          <div className="grid grid-cols-2 gap-3">
+                          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                             <div>
                               <label className={labelCls}>{type === 'calibration' ? 'Calibrated' : 'Maintained'} On</label>
                               <input

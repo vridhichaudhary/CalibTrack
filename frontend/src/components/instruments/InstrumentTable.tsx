@@ -80,8 +80,8 @@ export function InstrumentTable({ type = 'calibration' }: { type?: 'calibration'
 
   return (
     <div className="bg-white rounded-lg shadow-sm border border-gray-200">
-      <div className="p-4 border-b border-gray-200 flex flex-wrap gap-3 items-center justify-between">
-        <div className="relative flex-1 min-w-[240px] max-w-sm">
+      <div className="p-4 border-b border-gray-200 flex flex-col sm:flex-row gap-3 items-stretch sm:items-center justify-between">
+        <div className="relative flex-1 w-full sm:max-w-sm">
           <Search className="absolute left-3 top-2.5 h-4 w-4 text-gray-400" />
           <input
             type="text"

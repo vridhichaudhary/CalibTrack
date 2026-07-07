@@ -1,9 +1,10 @@
 'use client';
 
-import { useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { useRouter, usePathname } from 'next/navigation';
 import { useAuth } from '@/hooks/useAuth';
 import { Sidebar } from '@/components/layout/Sidebar';
+import { Menu } from 'lucide-react';
 
 export default function DashboardLayout({
   children,
@@ -11,6 +12,7 @@ export default function DashboardLayout({
   children: React.ReactNode;
 }) {
   const { user, isLoading, isAuthenticated } = useAuth();
+  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const router = useRouter();
   const pathname = usePathname();
 
@@ -45,9 +47,19 @@ export default function DashboardLayout({
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 flex">
-      <Sidebar />
-      <main className="flex-1">{children}</main>
+    <div className="min-h-screen bg-gray-50 flex flex-col md:flex-row">
+      <Sidebar isOpen={isSidebarOpen} onClose={() => setIsSidebarOpen(false)} />
+      <main className="flex-1 flex flex-col min-w-0">
+        <div className="md:hidden flex items-center justify-between bg-primary px-4 py-3 text-white">
+          <div className="font-semibold text-lg">CalibTrack</div>
+          <button onClick={() => setIsSidebarOpen(true)} className="p-1 hover:bg-primary-hover rounded">
+            <Menu className="h-6 w-6" />
+          </button>
+        </div>
+        <div className="flex-1 overflow-x-hidden">
+          {children}
+        </div>
+      </main>
     </div>
   );
 }

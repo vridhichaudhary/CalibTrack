@@ -219,7 +219,7 @@ export function InstrumentForm() {
         <h3 className="text-sm font-semibold text-gray-900">Initial Calibration Record</h3>
 
         {/* Dates */}
-        <div className="grid grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <Input
             label="Calibrated On"
             type="date"

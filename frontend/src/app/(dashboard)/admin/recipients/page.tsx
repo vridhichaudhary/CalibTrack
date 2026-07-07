@@ -89,7 +89,7 @@ export default function RecipientsPage() {
 
   return (
     <div className="max-w-5xl mx-auto px-4 py-8">
-      <div className="mb-6 flex items-center justify-between">
+      <div className="mb-6 flex flex-col sm:flex-row gap-4 items-start sm:items-center justify-between">
         <div>
           <h1 className="text-2xl font-semibold text-gray-900">Alert Recipients</h1>
           <p className="text-sm text-gray-500 mt-1">
